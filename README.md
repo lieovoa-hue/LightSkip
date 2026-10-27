@@ -30,6 +30,12 @@ Android 开屏广告自动跳过工具。打开已守护的应用时，轻跳在
 - 设置页新增「后台稳定运行」入口；最近任务卡片通过 `excludeFromRecents` 隐藏。
 - 应用页新增「全选 / 清空」；列表改为 `ListView` 复用行，离开主界面自动释放 UI。
 
+## 下载
+
+- GitHub Releases：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.1
+- Release APK：`dist/LightSkip-0.1.apk`
+- 带测试开屏的 Debug APK：`dist/LightSkip-0.1-debug-with-demo.apk`
+
 ## APK
 
 构建产物：
