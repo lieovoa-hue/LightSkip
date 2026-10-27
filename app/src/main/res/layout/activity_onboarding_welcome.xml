@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/paper"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="14dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="18dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.lightskip.app.ui.LogoView
+                android:layout_width="38dp"
+                android:layout_height="38dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="@color/ink"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:letterSpacing="0.17"
+                    android:text="@string/brand_latin"
+                    android:textColor="@color/muted"
+                    android:textSize="8.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_version_pill"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:text="@string/beta_version"
+                android:textColor="@color/muted"
+                android:textSize="8.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="278dp"
+            android:layout_marginTop="10dp">
+
+            <View
+                android:layout_width="280dp"
+                android:layout_height="220dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_hero_glow" />
+
+            <LinearLayout
+                android:layout_width="258dp"
+                android:layout_height="146dp"
+                android:layout_gravity="top|start"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="26dp"
+                android:background="@drawable/bg_ad_card"
+                android:elevation="6dp"
+                android:orientation="vertical"
+                android:rotation="-2">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="104dp"
+                    android:background="@drawable/bg_ad_creative">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|start"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_ad_tag"
+                        android:paddingLeft="5dp"
+                        android:paddingTop="2dp"
+                        android:paddingRight="5dp"
+                        android:paddingBottom="2dp"
+                        android:text="@string/ad_tag"
+                        android:textColor="@color/on_forest"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="0dp"
+                        android:layout_marginEnd="18dp"
+                        android:background="@drawable/bg_orb_1" />
+
+                    <View
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="36dp"
+                        android:layout_marginEnd="70dp"
+                        android:background="@drawable/bg_orb_2" />
+
+                    <View
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="62dp"
+                        android:layout_marginEnd="26dp"
+                        android:background="@drawable/bg_orb_3" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|start"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginBottom="12dp"
+                        android:orientation="vertical">
+
+                        <View
+                            android:layout_width="92dp"
+                            android:layout_height="5dp"
+                            android:background="@drawable/bg_ad_line" />
+
+                        <View
+                            android:layout_width="60dp"
+                            android:layout_height="5dp"
+                            android:layout_marginTop="5dp"
+                            android:background="@drawable/bg_ad_line" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/demo_title"
+                        android:textColor="@color/muted"
+                        android:textSize="9sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/demo_detail"
+                        android:textColor="@color/muted"
+                        android:textSize="9sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="76dp"
+                android:layout_height="32dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="64dp"
+                android:layout_marginEnd="15dp"
+                android:background="@drawable/bg_skip_pill"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skip_label"
+                    android:textColor="@color/on_forest"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="5"
+                    android:textColor="@color/lime"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="94dp"
+                android:layout_height="56dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="52dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_tap_ring"
+                android:rotation="-2" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/bg_check_pill"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_check"
+                    android:tint="@color/forest" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/check_done"
+                    android:textColor="@color/forest_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.12"
+            android:text="@string/onboarding_welcome_eyebrow"
+            android:textColor="@color/forest_text"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:letterSpacing="-0.04"
+            android:lineSpacingMultiplier="0.98"
+            android:text="@string/onboarding_welcome_title_1"
+            android:textColor="@color/ink"
+            android:textSize="29sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:letterSpacing="-0.04"
+            android:text="@string/onboarding_welcome_title_2"
+            android:textColor="@color/forest_text"
+            android:textSize="29sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingMultiplier="1.35"
+            android:text="@string/onboarding_welcome_body"
+            android:textColor="@color/muted"
+            android:textSize="12.5sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Chip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_scan"
+                android:drawableTint="@color/forest_text"
+                android:drawablePadding="4dp"
+                android:text="@string/benefit_local" />
+
+            <TextView
+                style="@style/Chip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_shield"
+                android:drawableTint="@color/forest_text"
+                android:drawablePadding="4dp"
+                android:text="@string/benefit_no_network" />
+
+            <TextView
+                style="@style/Chip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:layout_weight="1"
+                android:drawableStart="@drawable/ic_battery"
+                android:drawableTint="@color/forest_text"
+                android:drawablePadding="4dp"
+                android:text="@string/benefit_sleep" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/welcome_start"
+            style="@style/PrimaryButton"
+            android:layout_marginTop="20dp"
+            android:drawableEnd="@drawable/ic_arrow_right"
+            android:drawableTint="@color/lime"
+            android:drawablePadding="8dp"
+            android:text="@string/start_setup" />
+
+        <TextView
+            style="@style/Text.Micro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/microcopy_welcome"
+            android:textSize="9.5sp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang='zh-CN'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>轻跳 · 产品 UI 设计稿</title>
+  <link rel='stylesheet' href='mockup.css'>
+</head>
+<body>
+  <svg class='svg-defs' aria-hidden='true'>
+    <symbol id='i-arrow-right' viewBox='0 0 24 24'><path d='M4 12h15'/><path d='M13 6l6 6-6 6'/></symbol>
+    <symbol id='i-chevron-left' viewBox='0 0 24 24'><path d='M15 18l-6-6 6-6'/></symbol>
+    <symbol id='i-chevron-right' viewBox='0 0 24 24'><path d='M9 18l6-6-6-6'/></symbol>
+    <symbol id='i-shield' viewBox='0 0 24 24'><path d='M12 3l7 3v5.2c0 4.5-2.9 8-7 9.8-4.1-1.8-7-5.3-7-9.8V6l7-3z'/><path d='M9 12l2 2 4-4'/></symbol>
+    <symbol id='i-lock' viewBox='0 0 24 24'><rect x='5' y='10' width='14' height='10' rx='2.5'/><path d='M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10'/><path d='M12 14v2.5'/></symbol>
+    <symbol id='i-wifi-off' viewBox='0 0 24 24'><path d='M3 3l18 18'/><path d='M8.5 15.8a5 5 0 0 1 7 0'/><path d='M5.4 12.7a10 10 0 0 1 3.1-1.8'/><path d='M12.5 9.1c2.3.2 4.4 1 6.1 2.4'/><path d='M2.8 9.2A15 15 0 0 1 9 6.2'/><path d='M14.9 5.9a15 15 0 0 1 6.3 3.3'/><circle cx='12' cy='19' r='.8' fill='currentColor' stroke='none'/></symbol>
+    <symbol id='i-bolt' viewBox='0 0 24 24'><path d='M13.2 2.8L5.7 13h6l-1 8.2 7.7-10.3h-6l.8-8.1z'/></symbol>
+    <symbol id='i-check' viewBox='0 0 24 24'><path d='M4.5 12.5l4.7 4.7L19.5 7'/></symbol>
+    <symbol id='i-clock' viewBox='0 0 24 24'><circle cx='12' cy='12' r='8.5'/><path d='M12 7v5l3.3 2'/></symbol>
+    <symbol id='i-scan' viewBox='0 0 24 24'><path d='M4 9V5.8A1.8 1.8 0 0 1 5.8 4H9'/><path d='M15 4h3.2A1.8 1.8 0 0 1 20 5.8V9'/><path d='M20 15v3.2a1.8 1.8 0 0 1-1.8 1.8H15'/><path d='M9 20H5.8A1.8 1.8 0 0 1 4 18.2V15'/><path d='M7.5 12h9'/></symbol>
+    <symbol id='i-accessibility' viewBox='0 0 24 24'><circle cx='12' cy='4.5' r='2'/><path d='M5 9h14'/><path d='M12 9v6'/><path d='M8 21l4-6 4 6'/></symbol>
+    <symbol id='i-vibrate' viewBox='0 0 24 24'><rect x='8' y='4' width='8' height='16' rx='2'/><path d='M4.5 9v6'/><path d='M2.5 11v2'/><path d='M19.5 9v6'/><path d='M21.5 11v2'/><path d='M12 16.5h.01'/></symbol>
+    <symbol id='i-battery' viewBox='0 0 24 24'><rect x='3' y='7' width='17' height='10' rx='3'/><path d='M22 10v4'/><path d='M6.5 10h7v4h-7z' fill='currentColor' stroke='none'/></symbol>
+    <symbol id='i-search' viewBox='0 0 24 24'><circle cx='10.8' cy='10.8' r='6.3'/><path d='M15.4 15.4L20 20'/></symbol>
+    <symbol id='i-x' viewBox='0 0 24 24'><path d='M6 6l12 12'/><path d='M18 6L6 18'/></symbol>
+    <symbol id='i-home' viewBox='0 0 24 24'><path d='M3.5 10.8L12 3.5l8.5 7.3'/><path d='M5.5 9.5V20h13V9.5'/><path d='M9.5 20v-5.5h5V20'/></symbol>
+    <symbol id='i-apps' viewBox='0 0 24 24'><rect x='4' y='4' width='6' height='6' rx='1.6'/><rect x='14' y='4' width='6' height='6' rx='1.6'/><rect x='4' y='14' width='6' height='6' rx='1.6'/><rect x='14' y='14' width='6' height='6' rx='1.6'/></symbol>
+    <symbol id='i-settings' viewBox='0 0 24 24'><circle cx='12' cy='12' r='3.2'/><path d='M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z'/></symbol>
+    <symbol id='i-privacy' viewBox='0 0 24 24'><path d='M3 3l18 18'/><path d='M10.6 6.2A10.3 10.3 0 0 1 12 6c5 0 9 6 9 6a16.8 16.8 0 0 1-2.1 2.7'/><path d='M6.1 7.4A17.4 17.4 0 0 0 3 12s4 6 9 6a9.8 9.8 0 0 0 4.2-.9'/><path d='M9.9 9.9a3 3 0 0 0 4.2 4.2'/></symbol>
+    <symbol id='i-tap' viewBox='0 0 24 24'><path d='M9 11V6.5a1.5 1.5 0 0 1 3 0V11'/><path d='M12 11V5.5a1.5 1.5 0 0 1 3 0V11'/><path d='M15 11V7.5a1.5 1.5 0 0 1 3 0V14'/><path d='M9 11V9a1.5 1.5 0 0 0-3 0v5a6 6 0 0 0 6 6h1.5a5.5 5.5 0 0 0 5.5-5.5'/></symbol>
+    <symbol id='i-info' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9'/><path d='M12 11v6'/><path d='M12 7h.01'/></symbol>
+    <symbol id='i-alert' viewBox='0 0 24 24'><path d='M12 3.8L21 20H3L12 3.8z'/><path d='M12 9v4.5'/><path d='M12 17h.01'/></symbol>
+    <symbol id='i-trash' viewBox='0 0 24 24'><path d='M4 7h16'/><path d='M9 7V4.5h6V7'/><path d='M6.5 7l.8 13h9.4l.8-13'/><path d='M10 11v5.5'/><path d='M14 11v5.5'/></symbol>
+    <symbol id='i-refresh' viewBox='0 0 24 24'><path d='M20 7v5h-5'/><path d='M4 17v-5h5'/><path d='M19 12a7 7 0 0 0-12-4.5L5 9'/><path d='M5 12a7 7 0 0 0 12 4.5L19 15'/></symbol>
+    <symbol id='i-signal' viewBox='0 0 24 24'><path d='M4 20v-3'/><path d='M9 20v-6'/><path d='M14 20V10'/><path d='M19 20V7'/></symbol>
+    <symbol id='i-status-wifi' viewBox='0 0 24 24'><path d='M2.7 9.2a14.5 14.5 0 0 1 18.6 0'/><path d='M5.8 12.5a9.3 9.3 0 0 1 12.4 0'/><path d='M8.9 15.7a4.6 4.6 0 0 1 6.2 0'/><circle cx='12' cy='19' r='.8' fill='currentColor' stroke='none'/></symbol>
+    <symbol id='i-status-battery' viewBox='0 0 24 24'><rect x='3' y='7' width='17' height='10' rx='3'/><path d='M22 10v4'/><path d='M6.5 10h7v4h-7z' fill='currentColor' stroke='none'/></symbol>
+  </svg>
+
+  <main class='board'>
+    <header class='topbar'>
+      <div class='board-brand'>
+        <div class='logo-mark'><span class='play'></span><span class='pause'></span></div>
+        <div>
+          <div class='brand-name'>轻跳 <span>LIGHT SKIP</span></div>
+          <div class='brand-sub'>少等一秒，直接进入。</div>
+        </div>
+      </div>
+      <div class='board-heading'>
+        <div class='board-kicker'>ANDROID · PRODUCT / UI DIRECTION</div>
+        <div class='board-title'>开屏广告自动跳过 · 产品设计稿</div>
+      </div>
+      <div class='top-chips'>
+        <span class='chip accent'><i class='dot'></i>完全本地</span>
+        <span class='chip'>无网络权限</span>
+        <span class='chip'>Android 8.0+</span>
+      </div>
+    </header>
+
+    <section class='phones-grid'>
+      <article class='phone-col'>
+        <div class='screen-meta'><span class='screen-no'>01</span><span class='screen-name'>欢迎</span><span class='screen-caption'>第一次打开</span></div>
+        <div class='phone'>
+          <div class='screen s-welcome'>
+            <div class='statusbar'>
+              <span class='status-time'>9:41</span>
+              <div class='status-icons'>
+                <svg class='status-icon'><use href='#i-signal'/></svg>
+                <svg class='status-icon'><use href='#i-status-wifi'/></svg>
+                <svg class='status-icon battery-icon'><use href='#i-status-battery'/></svg>
+              </div>
+            </div>
+            <div class='welcome-body'>
+              <div class='onboard-brand'>
+                <div class='brand-lockup'>
+                  <div class='logo-mark'><span class='play'></span><span class='pause'></span></div>
+                  <div class='brand-type'><b>轻跳</b><span>LIGHT SKIP</span></div>
+                </div>
+                <span class='version-pill'>BETA 0.1</span>
+              </div>
+
+              <div class='hero-visual'>
+                <div class='hero-glow'></div>
+                <div class='ad-stage'>
+                  <div class='ad-creative'>
+                    <span class='ad-tag'>AD</span>
+                    <div class='ad-orbs'><i></i><i></i><i></i></div>
+                    <div class='ad-lines'><span></span><span></span></div>
+                  </div>
+                  <div class='ad-bar'><span>精选推荐</span><span>查看详情</span></div>
+                </div>
+                <div class='tap-ring'></div>
+                <div class='skip-pill'><span>跳过</span><b>5</b></div>
+                <div class='tap-check'><svg class='icon'><use href='#i-check'/></svg><span>已自动跳过</span></div>
+              </div>
+
+              <div class='welcome-copy'>
+                <span class='eyebrow'>打开即进入</span>
+                <h1>少等一秒，<br><span>直接进入。</span></h1>
+                <p>打开应用时，轻跳帮你点掉开屏广告。<br>只在需要时醒来，点完就休息。</p>
+              </div>
+
+              <div class='benefit-row'>
+                <span><svg class='icon'><use href='#i-scan'/></svg>本地识别</span>
+                <span><svg class='icon'><use href='#i-shield'/></svg>无网络权限</span>
+                <span><svg class='icon'><use href='#i-battery'/></svg>自动休眠</span>
+              </div>
+
+              <div class='welcome-bottom'>
+                <button class='primary-btn'>开始设置 <svg class='icon'><use href='#i-arrow-right'/></svg></button>
+                <p class='microcopy'>无需 Root · 无需注册 · 不含广告 SDK</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class='phone-col'>
+        <div class='screen-meta'><span class='screen-no'>02</span><span class='screen-name'>授权</span><span class='screen-caption'>只开一个权限</span></div>
+        <div class='phone'>
+          <div class='screen s-permission'>
+            <div class='statusbar'>
+              <span class='status-time'>9:41</span>
+              <div class='status-icons'>
+                <svg class='status-icon'><use href='#i-signal'/></svg>
+                <svg class='status-icon'><use href='#i-status-wifi'/></svg>
+                <svg class='status-icon battery-icon'><use href='#i-status-battery'/></svg>
+              </div>
+            </div>
+            <div class='flow-head'>
+              <button class='icon-button' aria-label='返回'><svg class='icon'><use href='#i-chevron-left'/></svg></button>
+              <span class='flow-step'>设置 <b>1 / 2</b></span>
+              <button class='text-button'>稍后</button>
+            </div>
+            <div class='permission-body'>
+              <span class='eyebrow warm'>只差一个权限</span>
+              <h1>只开一个权限，<br>换回每次开屏。</h1>
+              <p class='lead'>轻跳通过 Android 无障碍服务识别「跳过」按钮，不需要 Root，也不常驻后台。</p>
+
+              <section class='permission-card'>
+                <div class='perm-head'>
+                  <div class='perm-icon'><svg class='icon'><use href='#i-accessibility'/></svg></div>
+                  <div class='perm-copy'><b>无障碍服务</b><span>Accessibility Service</span></div>
+                  <span class='status-pill amber'>未开启</span>
+                </div>
+                <div class='system-path'><span>设置</span><i>›</i><span>无障碍</span><i>›</i><span>已下载的应用</span><i>›</i><span>轻跳</span></div>
+                <button class='primary-btn compact'>前往系统设置 <svg class='icon'><use href='#i-arrow-right'/></svg></button>
+              </section>
+
+              <section class='trust-card'>
+                <div class='card-kicker'>轻跳的工作边界</div>
+                <div class='trust-row'><span class='trust-icon'><svg class='icon'><use href='#i-clock'/></svg></span><div><b>只在开屏时工作</b><span>目标应用进入前台后，最多检测 6 秒。</span></div></div>
+                <div class='trust-row'><span class='trust-icon'><svg class='icon'><use href='#i-scan'/></svg></span><div><b>只看文字和按钮</b><span>不读取输入框，不保存屏幕画面。</span></div></div>
+                <div class='trust-row'><span class='trust-icon'><svg class='icon'><use href='#i-lock'/></svg></span><div><b>内容不出手机</b><span>没有网络权限，数据只留在本机。</span></div></div>
+              </section>
+
+              <div class='inline-notice'><svg class='icon'><use href='#i-info'/></svg><span>Android 13+ 若提示“受限设置”，请允许轻跳启用无障碍。</span></div>
+              <p class='privacy-foot'>系统不会自动开启，你可以随时关闭。</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class='phone-col'>
+        <div class='screen-meta'><span class='screen-no'>03</span><span class='screen-name'>首页</span><span class='screen-caption'>守护状态</span></div>
+        <div class='phone'>
+          <div class='screen s-home'>
+            <div class='statusbar'>
+              <span class='status-time'>9:41</span>
+              <div class='status-icons'>
+                <svg class='status-icon'><use href='#i-signal'/></svg>
+                <svg class='status-icon'><use href='#i-status-wifi'/></svg>
+                <svg class='status-icon battery-icon'><use href='#i-status-battery'/></svg>
+              </div>
+            </div>
+            <div class='app-header'>
+              <div><span class='hello'>早上好</span><h1>今天也直接进入</h1></div>
+              <div class='app-logo-badge'><div class='logo-mark'><span class='play'></span><span class='pause'></span></div></div>
+            </div>
+            <div class='home-body'>
+              <section class='guard-card'>
+                <div class='guard-orbit orbit-one'></div>
+                <div class='guard-orbit orbit-two'></div>
+                <div class='guard-head'>
+                  <span class='live-state'><i></i>守护中</span>
+                  <span class='toggle light on'><i></i></span>
+                </div>
+                <div class='guard-count'><b>08</b><span>次</span><small>今日已自动跳过</small></div>
+                <div class='guard-meta'><span><svg class='icon'><use href='#i-clock'/></svg>约省下 <b>12 秒</b> 等待 <i>示意</i></span><em>28 个应用</em></div>
+              </section>
+
+              <div class='stat-grid'>
+                <div class='stat-card'><span>平均响应 <i class='demo-tag'>示意</i></span><b>0.4<small>秒</small></b><em>从识别到点击</em></div>
+                <div class='stat-card'><span>今日耗电 <i class='demo-tag'>示意</i></span><b>&lt;0.1<small>%</small></b><em>短会话，无常驻扫描</em></div>
+              </div>
+
+              <section class='recent-card'>
+                <div class='card-head'><b>上次拦截</b><span>仅本机记录</span></div>
+                <div class='recent-row'>
+                  <div class='app-icon xhs'>小</div>
+                  <div class='recent-copy'><b>小红书</b><span>开屏广告 · 刚刚</span></div>
+                  <span class='success-pill'><svg class='icon'><use href='#i-check'/></svg>已跳过</span>
+                </div>
+              </section>
+
+              <section class='quick-card'>
+                <div class='quick-row'>
+                  <span class='quick-icon'><svg class='icon'><use href='#i-scan'/></svg></span>
+                  <div><b>仅开屏时识别</b><span>点完即停，不持续扫描</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='quick-row'>
+                  <span class='quick-icon'><svg class='icon'><use href='#i-vibrate'/></svg></span>
+                  <div><b>点击后轻震</b><span>只给一次克制反馈</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='quick-row'>
+                  <span class='quick-icon'><svg class='icon'><use href='#i-clock'/></svg></span>
+                  <div><b>检测窗口</b><span>6 秒 · 最多尝试 3 次</span></div>
+                  <svg class='icon chevron'><use href='#i-chevron-right'/></svg>
+                </div>
+              </section>
+            </div>
+            <nav class='tabbar' aria-label='主导航'>
+              <button class='tab active'><span class='tab-icon'><svg class='icon'><use href='#i-home'/></svg></span><span>首页</span></button>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-apps'/></svg></span><span>应用</span></button>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-settings'/></svg></span><span>设置</span></button>
+              <i class='home-indicator'></i>
+            </nav>
+          </div>
+        </div>
+      </article>
+      <article class='phone-col'>
+        <div class='screen-meta'><span class='screen-no'>04</span><span class='screen-name'>应用</span><span class='screen-caption'>守护范围</span></div>
+        <div class='phone'>
+          <div class='screen s-apps'>
+            <div class='statusbar'>
+              <span class='status-time'>9:41</span>
+              <div class='status-icons'>
+                <svg class='status-icon'><use href='#i-signal'/></svg>
+                <svg class='status-icon'><use href='#i-status-wifi'/></svg>
+                <svg class='status-icon battery-icon'><use href='#i-status-battery'/></svg>
+              </div>
+            </div>
+            <div class='app-header'>
+              <div><span class='hello'>守护范围</span><h1>选择要守护的应用</h1></div>
+              <button class='icon-button' aria-label='搜索'><svg class='icon'><use href='#i-search'/></svg></button>
+            </div>
+            <div class='apps-body'>
+              <p class='apps-summary'><b>28</b> 个已启用 · <span>4 个已排除</span></p>
+
+              <div class='segmented' role='tablist'>
+                <button class='active'>全部 <b>32</b></button>
+                <button>已启用 <b>28</b></button>
+                <button>已排除 <b>4</b></button>
+              </div>
+
+              <div class='search-box'><svg class='icon'><use href='#i-search'/></svg><span>搜索应用</span></div>
+
+              <div class='app-list'>
+                <div class='app-row'>
+                  <div class='app-icon weibo'>微</div>
+                  <div class='app-copy'><b>微博</b><span>已启用 · 今日跳过 3 次</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon xhs'>小</div>
+                  <div class='app-copy'><b>小红书</b><span>已启用 · 今日跳过 2 次</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon zhihu'>知</div>
+                  <div class='app-copy'><b>知乎</b><span>已启用 · 今日跳过 2 次</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon taobao'>淘</div>
+                  <div class='app-copy'><b>淘宝</b><span>已启用 · 今日跳过 1 次</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon netease'>云</div>
+                  <div class='app-copy'><b>网易云音乐</b><span>已启用 · 今日无开屏</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon bili'>哔</div>
+                  <div class='app-copy'><b>哔哩哔哩</b><span>已启用 · 今日无开屏</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='app-row'>
+                  <div class='app-icon amap'>高</div>
+                  <div class='app-copy'><b>高德地图</b><span class='muted-line'>已排除 · 不参与识别</span></div>
+                  <span class='toggle'><i></i></span>
+                </div>
+              </div>
+
+              <p class='apps-note'><svg class='icon'><use href='#i-info'/></svg><span>只显示桌面可见应用，不申请“读取全部应用”权限。新安装应用可手动加入。</span></p>
+            </div>
+            <nav class='tabbar' aria-label='主导航'>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-home'/></svg></span><span>首页</span></button>
+              <button class='tab active'><span class='tab-icon'><svg class='icon'><use href='#i-apps'/></svg></span><span>应用</span></button>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-settings'/></svg></span><span>设置</span></button>
+              <i class='home-indicator'></i>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class='phone-col'>
+        <div class='screen-meta'><span class='screen-no'>05</span><span class='screen-name'>设置</span><span class='screen-caption'>安静地工作</span></div>
+        <div class='phone'>
+          <div class='screen s-settings'>
+            <div class='statusbar'>
+              <span class='status-time'>9:41</span>
+              <div class='status-icons'>
+                <svg class='status-icon'><use href='#i-signal'/></svg>
+                <svg class='status-icon'><use href='#i-status-wifi'/></svg>
+                <svg class='status-icon battery-icon'><use href='#i-status-battery'/></svg>
+              </div>
+            </div>
+            <div class='app-header'>
+              <div><span class='hello'>轻跳 0.1</span><h1>设置</h1></div>
+            </div>
+            <div class='settings-body'>
+              <section class='status-card'>
+                <div class='status-shield'><svg class='icon'><use href='#i-shield'/></svg></div>
+                <div class='status-copy'><b>守护正常</b><span>无障碍服务已连接</span></div>
+                <span class='toggle light on'><i></i></span>
+              </section>
+
+              <section class='settings-group'>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-clock'/></svg></span>
+                  <div class='row-copy'><b>检测窗口</b><span>进入应用后只观察这么久</span></div>
+                  <span class='row-value'><strong>6 秒</strong><svg class='icon chevron'><use href='#i-chevron-right'/></svg></span>
+                </div>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-refresh'/></svg></span>
+                  <div class='row-copy'><b>最多尝试</b><span>避免重复点击同一个按钮</span></div>
+                  <span class='row-value'><strong>3 次</strong><svg class='icon chevron'><use href='#i-chevron-right'/></svg></span>
+                </div>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-x'/></svg></span>
+                  <div class='row-copy'><b>识别“关闭广告”</b><span>无文字 × 默认关闭，避免误触</span></div>
+                  <span class='toggle'><i></i></span>
+                </div>
+              </section>
+
+              <section class='settings-group'>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-vibrate'/></svg></span>
+                  <div class='row-copy'><b>点击后轻震</b><span>成功跳过时给一次反馈</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-scan'/></svg></span>
+                  <div class='row-copy'><b>本地统计</b><span>只记录次数与应用名</span></div>
+                  <span class='toggle on'><i></i></span>
+                </div>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-wifi-off'/></svg></span>
+                  <div class='row-copy'><b>网络权限</b><span>轻跳不申请 INTERNET</span></div>
+                  <span class='row-value quiet'>未申请</span>
+                </div>
+              </section>
+
+              <section class='settings-group'>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-trash'/></svg></span>
+                  <div class='row-copy'><b class='danger-text'>清除统计</b><span>删除本机保存的跳过记录</span></div>
+                  <svg class='icon chevron'><use href='#i-chevron-right'/></svg>
+                </div>
+                <div class='settings-row'>
+                  <span class='row-icon'><svg class='icon'><use href='#i-privacy'/></svg></span>
+                  <div class='row-copy'><b>隐私说明</b><span>看懂轻跳能做什么、不能做什么</span></div>
+                  <svg class='icon chevron'><use href='#i-chevron-right'/></svg>
+                </div>
+              </section>
+
+              <p class='version-line'>轻跳 0.1 · 完全本地 · 无广告 SDK</p>
+            </div>
+            <nav class='tabbar' aria-label='主导航'>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-home'/></svg></span><span>首页</span></button>
+              <button class='tab'><span class='tab-icon'><svg class='icon'><use href='#i-apps'/></svg></span><span>应用</span></button>
+              <button class='tab active'><span class='tab-icon'><svg class='icon'><use href='#i-settings'/></svg></span><span>设置</span></button>
+              <i class='home-indicator'></i>
+            </nav>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <div class='principles-head'><span>WHY IT STAYS LIGHT</span><b>三条设计原则</b></div>
+    <footer class='board-footer'>
+      <div class='note-card'>
+        <span class='note-index'>01</span>
+        <div><b>只在开屏工作时出现</b><p>目标应用进入前台后启动 6 秒短会话，成功或超时立即停止，不做常驻轮询。</p></div>
+      </div>
+      <div class='note-card'>
+        <span class='note-index'>02</span>
+        <div><b>屏幕内容不出手机</b><p>不截图、不做 OCR、不申请网络权限，文字与按钮匹配只发生在本地。</p></div>
+      </div>
+      <div class='note-card'>
+        <span class='note-index'>03</span>
+        <div><b>轻量不是口号</b><p>原生 Views、无 Room、无 WorkManager、无统计 SDK；Release 开启 R8 与资源压缩。</p></div>
+      </div>
+    </footer>
+    <p class='board-disclaimer'>首页的跳过次数、响应速度、耗电与节省时间均为设计示意（DEMO），实际表现需真机实测。</p>
+  </main>
+</body>
+</html>
