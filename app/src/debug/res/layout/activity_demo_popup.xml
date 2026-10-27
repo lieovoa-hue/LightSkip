@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/demo_popup_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/paper">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingTop="48dp"
+        android:paddingRight="24dp">
+
+        <TextView
+            style="@style/Text.H1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="模拟应用首页" />
+
+        <TextView
+            style="@style/Text.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="这是测试弹窗，不是真实广告。学习时可连续点两个 X，验证多规则记录。" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/demo_popup_card"
+        android:layout_width="300dp"
+        android:layout_height="420dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_ad_card"
+        android:elevation="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_ad_creative"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="推广卡片"
+                android:textColor="@color/on_forest"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="这是模拟的应用内弹窗广告\n点击右上角 X 关闭"
+                android:textColor="@color/white_72"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/demo_popup_close"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_close_circle"
+            android:clickable="true"
+            android:contentDescription="关闭广告"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="×"
+            android:textColor="@color/ink"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/demo_popup_close_two"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="56dp"
+            android:background="@drawable/bg_close_circle"
+            android:clickable="true"
+            android:contentDescription="关闭第二个广告"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="×"
+            android:textColor="@color/ink"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+</FrameLayout>

@@ -4,6 +4,12 @@
         <activity
             android:name=".DemoSplashActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.LightSkip" />
+        <activity
+            android:name=".DemoPopupActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.LightSkip" />
     </application>
 </manifest>

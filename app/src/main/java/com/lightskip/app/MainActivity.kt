@@ -2,12 +2,14 @@ package com.lightskip.app
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.PowerManager
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -20,16 +22,14 @@ import android.widget.Toast
 import com.lightskip.app.data.AppEntry
 import com.lightskip.app.data.AppRepository
 import com.lightskip.app.data.LocalStats
+import com.lightskip.app.data.PopupMode
 import com.lightskip.app.data.Prefs
+import com.lightskip.app.service.DiagnosticsStore
 import com.lightskip.app.ui.AppListAdapter
 import com.lightskip.app.ui.ToggleView
 import com.lightskip.app.util.AccessibilityUtils
 import com.lightskip.app.util.SystemBarUtils
-import com.lightskip.app.util.appIconLetter
 import com.lightskip.app.util.formatCount
-import com.lightskip.app.util.formatSeconds
-import com.lightskip.app.util.relativeTime
-import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
 
@@ -39,11 +39,12 @@ class MainActivity : Activity() {
     private lateinit var prefs: Prefs
     private lateinit var stats: LocalStats
     private lateinit var repo: AppRepository
+    private lateinit var appListAdapter: AppListAdapter
     private var allApps: List<AppEntry> = emptyList()
     private var currentTab = Tab.HOME
     private var appsFilter = Filter.ALL
     private var searchQuery = ""
-    private lateinit var appListAdapter: AppListAdapter
+    private var keepTaskOnStop = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +61,6 @@ class MainActivity : Activity() {
 
         setContentView(R.layout.activity_main)
         SystemBarUtils.apply(this)
-
         bindNavigation()
         bindHome()
         bindApps()
@@ -71,21 +71,23 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        keepTaskOnStop = false
+        finishLearningIfReturned()
         refreshHome()
         refreshSettings()
         if (currentTab == Tab.APPS) refreshApps()
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (!keepTaskOnStop && !isChangingConfigurations && !isFinishing) {
+            finishAndRemoveTask()
+        }
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (currentTab != Tab.HOME) selectTab(Tab.HOME) else super.onBackPressed()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (!isChangingConfigurations && !isFinishing) {
-            finishAndRemoveTask()
-        }
     }
 
     private fun bindNavigation() {
@@ -100,7 +102,6 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.apps_view).visibility = if (tab == Tab.APPS) View.VISIBLE else View.GONE
         findViewById<View>(R.id.settings_view).visibility = if (tab == Tab.SETTINGS) View.VISIBLE else View.GONE
         updateNavigation()
-
         when (tab) {
             Tab.HOME -> refreshHome()
             Tab.APPS -> refreshApps()
@@ -124,22 +125,22 @@ class MainActivity : Activity() {
     }
 
     private fun bindHome() {
-        val master = findViewById<ToggleView>(R.id.master_toggle)
-        master.onCheckedChange = { handleMasterToggle(it) }
+        findViewById<ToggleView>(R.id.master_toggle).onCheckedChange = { handleMasterToggle(it) }
 
         findViewById<View>(R.id.guard_card).setOnClickListener {
             if (!AccessibilityUtils.isServiceEnabled(this)) {
                 AccessibilityUtils.openAccessibilitySettings(this)
             }
         }
-
-        findViewById<View>(R.id.quick_scope_row).setOnClickListener { selectTab(Tab.APPS) }
-        findViewById<View>(R.id.quick_window_row).setOnClickListener { showWindowDialog() }
-
-        findViewById<ToggleView>(R.id.quick_vibrate).onCheckedChange = {
-            prefs.vibrateEnabled = it
-            refreshSettings()
+        findViewById<View>(R.id.check_accessibility).setOnClickListener {
+            AccessibilityUtils.openAccessibilitySettings(this)
         }
+        findViewById<View>(R.id.check_background).setOnClickListener {
+            showBackgroundDialog()
+        }
+        findViewById<View>(R.id.check_apps).setOnClickListener { selectTab(Tab.APPS) }
+        findViewById<View>(R.id.check_popup).setOnClickListener { showPopupModeDialog() }
+        findViewById<View>(R.id.home_test_splash).setOnClickListener { openDemoSplash() }
     }
 
     private fun handleMasterToggle(checked: Boolean) {
@@ -157,6 +158,7 @@ class MainActivity : Activity() {
 
     private fun refreshHome() {
         val serviceEnabled = AccessibilityUtils.isServiceEnabled(this)
+        val connected = DiagnosticsStore.serviceConnected
         val masterEnabled = prefs.masterEnabled
         val active = serviceEnabled && masterEnabled
 
@@ -164,6 +166,7 @@ class MainActivity : Activity() {
             when {
                 !serviceEnabled -> R.string.needs_permission
                 !masterEnabled -> R.string.paused
+                !connected -> R.string.status_not_connected
                 else -> R.string.guarding
             }
         )
@@ -171,49 +174,58 @@ class MainActivity : Activity() {
 
         val skips = stats.todaySkips()
         findViewById<TextView>(R.id.home_count).text = formatCount(skips)
-        findViewById<TextView>(R.id.home_saved).text = getString(
-            R.string.saved_format,
-            (skips * 1.5f).roundToInt()
+        findViewById<TextView>(R.id.home_app_count).text =
+            getString(R.string.apps_count_format, prefs.targetPackages.size)
+
+        val accessibilitySub = findViewById<TextView>(R.id.check_accessibility_sub)
+        accessibilitySub.setText(
+            if (serviceEnabled && !connected) R.string.check_accessibility_unconnected_sub
+            else R.string.check_accessibility_sub
         )
-        findViewById<TextView>(R.id.home_app_count).text = getString(
-            R.string.apps_count_format,
-            prefs.targetPackages.size
-        )
-
-        findViewById<TextView>(R.id.stat_response).text = formatSeconds(stats.averageResponseMs())
-        findViewById<TextView>(R.id.stat_sessions).text = getString(R.string.number_format, stats.todaySessions())
-
-        val recent = stats.lastSkip()
-        val recentIcon = findViewById<TextView>(R.id.recent_icon)
-        val recentName = findViewById<TextView>(R.id.recent_name)
-        val recentTime = findViewById<TextView>(R.id.recent_time)
-        val recentStatus = findViewById<TextView>(R.id.recent_status)
-
-        if (recent == null) {
-            recentIcon.text = "?"
-            recentIcon.backgroundTintList = ColorStateList.valueOf(getColor(R.color.nav_inactive))
-            recentName.setText(R.string.recent_empty_name)
-            recentTime.setText(R.string.recent_empty_sub)
-            recentStatus.visibility = View.GONE
-        } else {
-            val label = repo.labelFor(recent.packageName)
-            recentIcon.text = appIconLetter(label)
-            recentIcon.backgroundTintList = ColorStateList.valueOf(repo.colorFor(recent.packageName))
-            recentName.text = label
-            recentTime.text = getString(R.string.recent_time_format, relativeTime(recent.at))
-            recentStatus.visibility = View.VISIBLE
+        val accessibilityStatus = findViewById<TextView>(R.id.check_accessibility_status)
+        when {
+            !serviceEnabled -> setStatus(accessibilityStatus, R.string.status_off, R.color.amber_text)
+            !connected -> setStatus(accessibilityStatus, R.string.status_not_connected, R.color.amber_text)
+            else -> setStatus(accessibilityStatus, R.string.status_connected, R.color.forest_text)
         }
 
-        findViewById<TextView>(R.id.quick_scope_sub).text = getString(
-            R.string.quick_scope_sub,
-            prefs.targetPackages.size
+        val batteryStatus = findViewById<TextView>(R.id.check_background_status)
+        val unrestricted = runCatching {
+            val power = getSystemService(PowerManager::class.java)
+            power.isIgnoringBatteryOptimizations(packageName)
+        }.getOrDefault(false)
+        if (unrestricted) {
+            setStatus(batteryStatus, R.string.battery_unrestricted, R.color.forest_text)
+        } else {
+            setStatus(batteryStatus, R.string.battery_restricted, R.color.amber_text)
+        }
+
+        val appsStatus = findViewById<TextView>(R.id.check_apps_status)
+        if (prefs.targetPackages.isEmpty()) {
+            setStatus(appsStatus, R.string.apps_zero, R.color.amber_text)
+        } else {
+            setStatus(
+                appsStatus,
+                R.string.apps_count_format,
+                R.color.forest_text,
+                prefs.targetPackages.size
+            )
+        }
+
+        val popupStatus = findViewById<TextView>(R.id.check_popup_status)
+        setStatus(
+            popupStatus,
+            popupModeLabel(prefs.popupMode),
+            if (prefs.popupMode == PopupMode.OFF) R.color.muted else R.color.forest_text
         )
-        findViewById<TextView>(R.id.quick_window_sub).text = getString(
-            R.string.quick_window_sub_format,
-            (prefs.detectionWindowMs / 1000L).toInt(),
-            prefs.maxAttempts
-        )
-        findViewById<ToggleView>(R.id.quick_vibrate).setChecked(prefs.vibrateEnabled, animate = false)
+
+        findViewById<View>(R.id.home_test_splash).visibility =
+            if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+    }
+
+    private fun setStatus(view: TextView, textRes: Int, colorRes: Int, vararg args: Any) {
+        view.text = if (args.isEmpty()) getString(textRes) else getString(textRes, *args)
+        view.setTextColor(getColor(colorRes))
     }
 
     private fun bindApps() {
@@ -229,6 +241,7 @@ class MainActivity : Activity() {
         )
         findViewById<ListView>(R.id.app_list).adapter = appListAdapter
         findViewById<View>(R.id.apps_select_all).setOnClickListener { toggleAllApps() }
+
         findViewById<View>(R.id.apps_search_button).setOnClickListener {
             val input = findViewById<EditText>(R.id.search_input)
             input.requestFocus()
@@ -256,17 +269,6 @@ class MainActivity : Activity() {
         refreshAppList()
     }
 
-    private fun toggleAllApps() {
-        val allEnabled = allApps.isNotEmpty() && allApps.all { prefs.isTarget(it.packageName) }
-        val targets = prefs.targetPackages.toMutableSet()
-        if (allEnabled) targets.clear() else targets.addAll(allApps.map { it.packageName })
-        prefs.targetPackages = targets
-        updateSegments()
-        updateAppsSummary()
-        refreshAppList()
-        refreshHome()
-    }
-
     private fun refreshApps() {
         allApps = repo.load()
         updateSegments()
@@ -277,11 +279,9 @@ class MainActivity : Activity() {
     private fun updateSegments() {
         val enabled = allApps.count { prefs.isTarget(it.packageName) }
         val excluded = allApps.size - enabled
-
         styleSegment(R.id.seg_all, appsFilter == Filter.ALL)
         styleSegment(R.id.seg_enabled, appsFilter == Filter.ENABLED)
         styleSegment(R.id.seg_excluded, appsFilter == Filter.EXCLUDED)
-
         findViewById<TextView>(R.id.seg_all).text =
             getString(R.string.filter_count_format, getString(R.string.filter_all), allApps.size)
         findViewById<TextView>(R.id.seg_enabled).text =
@@ -304,6 +304,17 @@ class MainActivity : Activity() {
             setTextColor(getColor(if (active) R.color.forest_text else R.color.muted))
             typeface = if (active) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         }
+    }
+
+    private fun toggleAllApps() {
+        val allEnabled = allApps.isNotEmpty() && allApps.all { prefs.isTarget(it.packageName) }
+        val targets = prefs.targetPackages.toMutableSet()
+        if (allEnabled) targets.clear() else targets.addAll(allApps.map { it.packageName })
+        prefs.targetPackages = targets
+        updateSegments()
+        updateAppsSummary()
+        refreshAppList()
+        refreshHome()
     }
 
     private fun refreshAppList() {
@@ -344,41 +355,36 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.settings_status_card).setOnClickListener {
             AccessibilityUtils.openAccessibilitySettings(this)
         }
-
         findViewById<ToggleView>(R.id.settings_toggle).onCheckedChange = { handleMasterToggle(it) }
-        findViewById<View>(R.id.row_window).setOnClickListener { showWindowDialog() }
-        findViewById<View>(R.id.row_attempts).setOnClickListener { showAttemptsDialog() }
-
-        findViewById<ToggleView>(R.id.toggle_close_ad).onCheckedChange = {
-            prefs.closeAdEnabled = it
+        findViewById<View>(R.id.row_accessibility).setOnClickListener {
+            AccessibilityUtils.openAccessibilitySettings(this)
         }
-        findViewById<ToggleView>(R.id.toggle_vibrate).onCheckedChange = {
-            prefs.vibrateEnabled = it
+        findViewById<View>(R.id.row_background).setOnClickListener { showBackgroundDialog() }
+        findViewById<ToggleView>(R.id.toggle_compat).onCheckedChange = {
+            prefs.compatibilityMode = it
             refreshHome()
+            refreshSettings()
         }
-        findViewById<ToggleView>(R.id.toggle_stats).onCheckedChange = {
-            prefs.statsEnabled = it
-            refreshHome()
-        }
-
-        findViewById<View>(R.id.row_network).setOnClickListener {
-            showInfoDialog(R.string.network_title, R.string.network_body)
-        }
-        findViewById<View>(R.id.row_background).setOnClickListener {
-            showBackgroundDialog()
-        }
-        findViewById<View>(R.id.row_clear).setOnClickListener { confirmClearStats() }
+        findViewById<View>(R.id.row_popup).setOnClickListener { showPopupModeDialog() }
+        findViewById<View>(R.id.row_learning).setOnClickListener { onLearningClicked() }
+        findViewById<View>(R.id.row_diagnostics).setOnClickListener { showDiagnosticsDialog() }
         findViewById<View>(R.id.row_privacy).setOnClickListener {
             showInfoDialog(R.string.privacy_title, R.string.privacy_body)
         }
+
         findViewById<View>(R.id.row_demo).apply {
             visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
             setOnClickListener { openDemoSplash() }
+        }
+        findViewById<View>(R.id.row_demo_popup).apply {
+            visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+            setOnClickListener { openDemoPopup() }
         }
     }
 
     private fun refreshSettings() {
         val serviceEnabled = AccessibilityUtils.isServiceEnabled(this)
+        val connected = DiagnosticsStore.serviceConnected
         val active = serviceEnabled && prefs.masterEnabled
 
         val title = findViewById<TextView>(R.id.settings_status_title)
@@ -387,6 +393,10 @@ class MainActivity : Activity() {
             !serviceEnabled -> {
                 title.setText(R.string.settings_status_off)
                 sub.setText(R.string.settings_status_sub_off)
+            }
+            !connected -> {
+                title.setText(R.string.settings_status_unconnected)
+                sub.setText(R.string.settings_status_sub_unconnected)
             }
             !prefs.masterEnabled -> {
                 title.setText(R.string.settings_status_paused)
@@ -399,45 +409,137 @@ class MainActivity : Activity() {
         }
         findViewById<ToggleView>(R.id.settings_toggle).setChecked(active, animate = false)
 
-        findViewById<TextView>(R.id.value_window).text =
-            getString(R.string.seconds_format, (prefs.detectionWindowMs / 1000L).toInt())
-        findViewById<TextView>(R.id.value_attempts).text =
-            getString(R.string.attempts_format, prefs.maxAttempts)
+        val accessibilityValue = findViewById<TextView>(R.id.value_accessibility)
+        when {
+            !serviceEnabled -> setStatus(accessibilityValue, R.string.status_off, R.color.amber_text)
+            !connected -> setStatus(accessibilityValue, R.string.status_not_connected, R.color.amber_text)
+            else -> setStatus(accessibilityValue, R.string.status_connected, R.color.forest_text)
+        }
 
-        findViewById<ToggleView>(R.id.toggle_close_ad).setChecked(prefs.closeAdEnabled, animate = false)
-        findViewById<ToggleView>(R.id.toggle_vibrate).setChecked(prefs.vibrateEnabled, animate = false)
-        findViewById<ToggleView>(R.id.toggle_stats).setChecked(prefs.statsEnabled, animate = false)
+        findViewById<ToggleView>(R.id.toggle_compat).setChecked(prefs.compatibilityMode, animate = false)
+        findViewById<TextView>(R.id.value_popup).setText(popupModeLabel(prefs.popupMode))
+        val learningValue = findViewById<TextView>(R.id.value_learning)
+        when {
+            !prefs.learningMode -> {
+                learningValue.setText(R.string.learning_off)
+                learningValue.setTextColor(getColor(R.color.muted))
+            }
+            !prefs.learningArmed -> {
+                learningValue.setText(R.string.learning_waiting_splash)
+                learningValue.setTextColor(getColor(R.color.amber_text))
+            }
+            else -> {
+                learningValue.text = getString(R.string.learning_captured_format, prefs.learningSavedCount)
+                learningValue.setTextColor(getColor(R.color.forest_text))
+            }
+        }
     }
 
-    private fun showWindowDialog() {
-        val values = longArrayOf(4_000L, 6_000L, 8_000L, 10_000L)
-        val labels = arrayOf("4 秒", "6 秒", "8 秒", "10 秒")
-        val checked = values.indexOf(prefs.detectionWindowMs).let { if (it < 0) 1 else it }
+    private fun popupModeLabel(mode: PopupMode): Int = when (mode) {
+        PopupMode.OFF -> R.string.popup_off
+        PopupMode.LEARNED -> R.string.popup_learned
+    }
+
+    private fun showPopupModeDialog() {
+        val modes = arrayOf(PopupMode.OFF, PopupMode.LEARNED)
+        val labels = arrayOf(
+            getString(R.string.popup_off),
+            getString(R.string.popup_learned)
+        )
+        val checked = modes.indexOf(prefs.popupMode).coerceAtLeast(0)
         AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_window_title)
+            .setTitle(R.string.check_popup)
             .setSingleChoiceItems(labels, checked) { dialog, which ->
-                prefs.detectionWindowMs = values[which]
+                prefs.popupMode = modes[which]
+                if (modes[which] == PopupMode.LEARNED) {
+                    Toast.makeText(this, R.string.popup_learned_warning, Toast.LENGTH_LONG).show()
+                }
                 dialog.dismiss()
                 refreshHome()
                 refreshSettings()
             }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    private fun showAttemptsDialog() {
-        val values = intArrayOf(2, 3, 5)
-        val labels = arrayOf("2 次", "3 次", "5 次")
-        val checked = values.indexOf(prefs.maxAttempts).let { if (it < 0) 1 else it }
+    private fun onLearningClicked() {
+        if (prefs.learningMode) {
+            finishLearningIfReturned()
+            refreshSettings()
+            return
+        }
+
+        val entries = mutableListOf<Pair<String, String>>()
+        if (BuildConfig.DEBUG) entries.add(packageName to getString(R.string.learning_test_app))
+        entries.addAll(
+            repo.load()
+                .filter { prefs.isTarget(it.packageName) }
+                .map { it.packageName to it.label }
+        )
+        if (entries.isEmpty()) {
+            Toast.makeText(this, R.string.learning_no_apps, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = entries.map { it.second }.toTypedArray()
         AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_attempts_title)
-            .setSingleChoiceItems(labels, checked) { dialog, which ->
-                prefs.maxAttempts = values[which]
-                dialog.dismiss()
-                refreshHome()
+            .setTitle(R.string.learning_choose_app)
+            .setItems(labels) { _, which ->
+                val (targetPackage, label) = entries[which]
+                prefs.startLearning(targetPackage)
+                DiagnosticsStore.clearLearning()
+                Toast.makeText(
+                    this,
+                    getString(R.string.learning_started_format, label),
+                    Toast.LENGTH_LONG
+                ).show()
                 refreshSettings()
+                if (!launchLearningTarget(targetPackage)) {
+                    prefs.stopLearning()
+                    Toast.makeText(this, R.string.learning_launch_failed, Toast.LENGTH_LONG).show()
+                    refreshSettings()
+                }
             }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
+
+    private fun launchLearningTarget(targetPackage: String): Boolean {
+        if (BuildConfig.DEBUG && targetPackage == packageName) {
+            keepTaskOnStop = true
+            return try {
+                startActivity(
+                    Intent().setClassName(packageName, "com.lightskip.app.DemoPopupActivity")
+                )
+                true
+            } catch (_: Exception) {
+                keepTaskOnStop = false
+                false
+            }
+        }
+
+        val intent = packageManager.getLaunchIntentForPackage(targetPackage) ?: return false
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        return try {
+            startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun finishLearningIfReturned() {
+        if (!prefs.learningMode) return
+        val count = prefs.learningSavedCount
+        prefs.stopLearning()
+        DiagnosticsStore.clearLearning()
+        val message = if (count > 0) {
+            getString(R.string.learning_finished_format, count)
+        } else {
+            getString(R.string.learning_finished_none)
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
 
     private fun showBackgroundDialog() {
         AlertDialog.Builder(this)
@@ -450,17 +552,20 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun confirmClearStats() {
+    private fun showDiagnosticsDialog() {
+        val text = DiagnosticsStore.format(this, prefs)
         AlertDialog.Builder(this)
-            .setTitle(R.string.clear_confirm_title)
-            .setMessage(R.string.clear_confirm_msg)
+            .setTitle(R.string.diagnostics_title)
+            .setMessage(text)
             .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.clear) { _, _ ->
-                stats.clear()
-                refreshHome()
-                Toast.makeText(this, R.string.toast_stats_cleared, Toast.LENGTH_SHORT).show()
-            }
+            .setPositiveButton(R.string.copy) { _, _ -> copyDiagnostics(text) }
             .show()
+    }
+
+    private fun copyDiagnostics(text: String) {
+        val clipboard = getSystemService(ClipboardManager::class.java)
+        clipboard.setPrimaryClip(ClipData.newPlainText("LightSkip diagnostics", text))
+        Toast.makeText(this, R.string.diagnostics_copied, Toast.LENGTH_SHORT).show()
     }
 
     private fun showInfoDialog(titleRes: Int, messageRes: Int) {
@@ -473,13 +578,23 @@ class MainActivity : Activity() {
 
     private fun openDemoSplash() {
         if (!BuildConfig.DEBUG) return
+        keepTaskOnStop = true
         try {
-            startActivity(
-                Intent().setClassName(packageName, "com.lightskip.app.DemoSplashActivity")
-            )
+            startActivity(Intent().setClassName(packageName, "com.lightskip.app.DemoSplashActivity"))
         } catch (_: Exception) {
+            keepTaskOnStop = false
             Toast.makeText(this, R.string.toast_demo_missing, Toast.LENGTH_SHORT).show()
         }
     }
 
+    private fun openDemoPopup() {
+        if (!BuildConfig.DEBUG) return
+        keepTaskOnStop = true
+        try {
+            startActivity(Intent().setClassName(packageName, "com.lightskip.app.DemoPopupActivity"))
+        } catch (_: Exception) {
+            keepTaskOnStop = false
+            Toast.makeText(this, R.string.toast_demo_missing, Toast.LENGTH_SHORT).show()
+        }
+    }
 }

@@ -1,6 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">轻跳</string>
+    <string name="settings_status_unconnected">无障碍已开启</string>
+    <string name="settings_status_sub_unconnected">服务未连接，点此检查</string>
+    <string name="popup_position_warning">位置模式可能误触，仅在严格模式无法识别时使用；建议先用学习模式。</string>
+    <string name="learning_cancelled">已取消学习</string>
+    <string name="copy">复制</string>    <string name="home_status_title">守护状态</string>
+    <string name="guard_switch">守护开关</string>
+    <string name="home_local_only">仅本地工作</string>
+    <string name="one_click_check">一键检查</string>
+    <string name="check_accessibility">无障碍服务</string>
+    <string name="check_accessibility_sub">系统设置中开启</string>
+    <string name="check_accessibility_unconnected_sub">已开启但未连接，点此重新开关</string>
+    <string name="check_background">后台运行</string>
+    <string name="check_background_sub">HyperOS 需设为无限制</string>
+    <string name="check_apps">守护应用</string>
+    <string name="check_apps_sub">选择要跳过的 App</string>
+    <string name="check_popup">应用内弹窗</string>
+    <string name="check_popup_sub">只执行学习过的规则</string>
+    <string name="status_unknown">未知</string>
+    <string name="status_connected">已连接</string>
+    <string name="status_not_connected">已开启未连接</string>
+    <string name="battery_unrestricted">无限制</string>
+    <string name="battery_restricted">受限</string>
+    <string name="popup_off">关闭</string>
+    <string name="popup_learned">学习规则</string>
+    <string name="popup_learned_warning">开启后只会执行你手动学习过的关闭按钮，不再自动扫右上角 X。</string>
+    <string name="popup_strict">严格</string>
+    <string name="popup_position">位置</string>
+    <string name="popup_mode_sub">只执行学习过的关闭按钮</string>
+    <string name="learning_choose_app">选择要学习的应用</string>
+    <string name="learning_no_apps">请先在应用页开启要守护的应用</string>
+    <string name="learning_started_format">正在打开 %1$s，跳过开屏后开始记录</string>
+    <string name="learning_test_app">轻跳测试页（Debug）</string>
+    <string name="learning_title">学习关闭按钮</string>
+    <string name="learning_sub">自动打开 App，跳过开屏后逐个点 X</string>
+    <string name="learning_off">未开启</string>
+    <string name="learning_waiting">等待点按</string>
+    <string name="learning_waiting_splash">等待开屏</string>
+    <string name="learning_captured_format">已记录 %1$d 个</string>
+    <string name="learning_armed">开屏已跳过，开始记录弹窗关闭按钮</string>
+    <string name="learning_wait_splash">请先让开屏广告跳过，再点弹窗上的 X</string>
+    <string name="learning_started">请打开目标 App，在广告上点一次 X</string>
+    <string name="learning_empty">还没有捕获到弹窗</string>
+    <string name="learning_select_title">选择哪个是关闭按钮</string>
+    <string name="learning_rule_saved_format">已记录第 %1$d 个关闭按钮，可继续点下一个</string>
+    <string name="learning_rule_duplicate">这个关闭按钮已经记录过了</string>
+    <string name="learning_rule_limit">已记录 5 个关闭按钮，学习完成</string>
+    <string name="learning_invalid_close">请对准广告上的小关闭按钮再点一次</string>
+    <string name="learning_finished_format">学习结束，本次记录 %1$d 个关闭按钮</string>
+    <string name="learning_finished_none">学习结束，本次未记录规则</string>
+    <string name="learning_launch_failed">无法自动打开该应用，请手动打开后重试</string>
+    <string name="diagnostics_title">诊断与反馈</string>
+    <string name="diagnostics_sub">复制脱敏日志</string>
+    <string name="diagnostics_copied">诊断信息已复制</string>
+    <string name="test_splash">测试开屏</string>
+    <string name="test_popup">测试弹窗</string>
+    <string name="test_popup_sub">验证应用内关闭按钮</string>
+    <string name="accessibility_service_sub">系统设置中开启</string>
+    <string name="compatibility_mode">兼容模式</string>
+    <string name="compatibility_mode_sub">10 秒 / 5 次 / 扫描所有窗口</string>
+    <string name="version_line_02">轻跳 0.2 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>
@@ -89,7 +149,7 @@
     <string name="settings_status_sub_paused">轻跳已连接，当前暂停识别</string>
     <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">守护范围</string>
     <string name="apps_summary_zero">0 个已启用 · 0 个已排除</string>
-    <string name="version_short">轻跳 0.1</string>    <string name="apps_page_title">选择要守护的应用</string>
+    <string name="version_short">轻跳 0.2</string>    <string name="apps_page_title">选择要守护的应用</string>
     <string name="apps_summary_format">%1$d 个已启用 · %2$d 个已排除</string>
     <string name="filter_count_format">%1$s %2$d</string>
     <string name="number_format">%d</string>

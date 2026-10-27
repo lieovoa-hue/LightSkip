@@ -1,237 +1,189 @@
 # 轻跳 / LIGHT SKIP
 
-Android 开屏广告自动跳过工具。打开已守护的应用时，轻跳在本机识别「跳过」按钮并自动点击。
+Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## 当前状态
+## v0.2 能力
 
-已完成可构建的 Android MVP：
+- 开屏广告：识别「跳过」文字、资源 ID 和右上/右下位置，支持点击与手势兜底。
+- 应用内弹窗：只执行用户手动学习过的关闭按钮，不再自动乱点右上角 X。
+- 学习模式：选择 App 后自动打开；跳过开屏后开始记录；一次最多记录 5 个关闭按钮。
+- 多点学习：同一 App 有多个广告时，可连续点击每个广告的 X；重复按钮不会重复计数。
+- 自动结束：返回轻跳、再次点「学习关闭按钮」或记录满 5 个后结束。
+- 一键检查：无障碍连接、后台运行、守护应用、弹窗模式。
+- 本机诊断：最近事件、候选节点、点击结果，可复制脱敏文本。
+- 无网络、无广告 SDK、无截图、无 OCR。
 
-- 欢迎 → 无障碍授权 → 应用推荐 → 首页
-- 首页守护状态、今日跳过、平均响应、今日会话、上次拦截
-- 应用守护清单、筛选、搜索、独立开关（包含系统浏览器等预装应用）
-- 应用页提供「全选 / 清空」快捷操作
-- 支持右上、右下两种常见跳过按钮位置
-- 设置：检测窗口、尝试次数、关闭广告、轻震、本地统计、后台稳定运行、清除统计、隐私说明
-- `AccessibilityService` 短会话：最长 6 秒、最多 3 次尝试
-- 本地文本规则、节点扫描、点击/手势兜底
-- 无 `INTERNET` 权限、无 Room、无 WorkManager、无网络库
-- 深色模式、自定义 Toggle、可访问性标签
+## 学习流程
 
-**已在 Android 真机上完成验证。** 内置测试页、微博开屏、系统浏览器开屏均验证成功；B 站测试时未复现广告，已加入右下角规则。构建、资源链接、R8 和 `lintVitalRelease` 已通过；实际跳过效果需要在手机上验证。
+1. 进入「设置」→「学习关闭按钮」。
+2. 选择要学习的 App。轻跳会自动打开该 App。
+3. 轻跳先处理开屏广告；跳过成功或等待结束后进入记录状态。
+4. 在第一个弹窗广告上点击一次小 X。
+5. 如果还有第二个、第三个弹窗广告，继续分别点击它们的 X。
+6. 返回轻跳，或再次点击「学习关闭按钮」结束学习。
 
-## 实现差异
-
-- 首页第二张数据卡从设计稿的「今日耗电」改为「今日会话」。耗电无法在不引入额外权限和复杂测量的情况下可靠统计，不能用假数据冒充。
-- 首页的跳过次数、平均响应、今日会话、上次拦截均来自本机真实统计。
-- 「约省下 X 秒」按每次 1.5 秒估算，界面标注「估算」。
-- Release 包不包含「测试开屏」入口；Debug 包包含。
-- 设置页新增「后台稳定运行」入口；最近任务卡片通过 `excludeFromRecents` 隐藏。
-- 应用页新增「全选 / 清空」；列表改为 `ListView` 复用行，离开主界面自动释放 UI。
+当前每个 App 最多保存 5 条关闭规则。规则优先使用 `viewId`、`contentDescription`，没有元数据时使用相对区域 + 小型可点击节点兜底。
 
 ## 下载
 
-- GitHub Releases：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.1
-- Release APK：`dist/LightSkip-0.1.apk`
-- 带测试开屏的 Debug APK：`dist/LightSkip-0.1-debug-with-demo.apk`
+- v0.2 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.2
+- Release APK：`dist/LightSkip-0.2.apk`
+- 带测试开屏和双 X 测试弹窗的 Debug APK：`dist/LightSkip-0.2-debug-with-demo.apk`
+- 旧版 v0.1：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.1
 
-## APK
+## 体积与权限
 
-构建产物：
+本机构建实测：
 
-- Debug（含「测试开屏」入口）：`app/build/outputs/apk/debug/app-debug.apk`
-- Release（R8 + 资源压缩）：`app/build/outputs/apk/release/app-release.apk`
-- 便于安装的副本：`dist/LightSkip-0.1.apk`
+- Release APK：`127,281` 字节，约 `124 KB`
+- Debug APK：`1,047,138` 字节，约 `1.0 MB`
+- Release 使用 R8 + 资源压缩
+- 无 `uses-permission`
+- 无 `INTERNET`
+- 无 Room、WorkManager、网络库、第三方统计 SDK
 
-实测体积（本机构建）：
-
-- Debug：约 `0.95 MB`
-- Release：约 `115 KB`
-
-Release 目前使用 debug 签名，方便本地安装测试。正式分发前请替换成自己的 release keystore。
+Release 目前使用 debug 签名，方便侧载测试。正式分发前应替换为自己的 release keystore。
 
 ## 安装与使用
 
-1. 把 `dist/LightSkip-0.1.apk` 传到手机并安装。需要允许「安装未知来源应用」。
-2. 打开轻跳，按引导进入无障碍授权页。
-3. 在系统设置中开启：
-   `设置 › 无障碍 › 已下载的应用 › 轻跳`
-4. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置，再开启无障碍。
-5. 在应用页勾选要守护的 App。
-6. 回到首页确认显示「守护中」。
-7. 打开目标 App，轻跳会在开屏阶段尝试点击「跳过」。
+1. 安装 `dist/LightSkip-0.2.apk`。
+2. 打开轻跳，进入系统无障碍设置开启服务。
+3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
+4. 在应用页勾选要守护的 App。
+5. 回到首页确认显示「守护中」。
+6. 打开目标 App，轻跳会在短会话内尝试跳过开屏。
+7. 需要关闭应用内弹窗时，先在设置里完成一次学习。
 
-### 测试开屏
+部分 OEM 在重装 APK 后会出现「设置里已开启，但服务未连接」。此时进入系统无障碍设置，把轻跳关闭一次再开启即可；MEIZU 21 上已复现并验证该恢复方式。
 
-Debug 包内置一个假开屏页面：
+## 低频与省电设计
 
-1. 安装 `app-debug.apk`。
-2. 开启无障碍服务。
-3. 进入「设置」→「测试开屏」。
-4. 页面右上角有「跳过 5」，轻跳应在 1 秒内自动点击并返回。
+- 无障碍空闲时只订阅窗口状态、窗口变化和点击事件。
+- `TYPE_WINDOW_CONTENT_CHANGED` 和目标窗口读取只在开屏/弹窗短会话内开启。
+- 会话结束后立即恢复低频事件类型，并移除多窗口读取标志。
+- 无障碍通知合并间隔为 `100ms`，避免动画和倒计时造成事件风暴。
+- 节点扫描限制为最多 `400` 个节点、`14` 层。
+- 只扫描目标 App 自己的窗口，不遍历系统 UI、输入法等窗口。
+- 开屏兼容模式最多 8 次扫描，普通模式 5 次；内容变化最多触发 3/2 次。
+- 内容变化防抖：开屏 `240ms`，弹窗 `300ms`。
+- 守护包名使用进程内缓存，避免高频事件反复复制 100+ 个包名。
+- 不轮询、不持有 WakeLock、不注册开机广播、不使用前台常驻服务。
+- 离开 UI 后释放 Activity/View，只保留系统托管的无障碍服务。
 
-Release 包不包含测试页。
+真机采样（MEIZU 21，Android 16，Debug 包）：
 
-## 构建
+- 会话结束后无障碍事件类型已收缩为 `VIEW_CLICKED / WINDOW_STATE_CHANGED / WINDOWS_CHANGED`
+- 空闲 CPU 采样为 `0%`
+- 后台 PSS 约 `52–57 MB`，随系统版本和机型波动
+- 连续两次内置开屏均跳过成功
+- 一次学习连续记录两个 X，`learning_saved_count=2`
+- 学习后再次打开测试弹窗可自动关闭
+- B 站自动拉起、跳过开屏、进入学习状态验证成功
 
-环境：
+## 后台运行与最近任务
 
-- JDK 17（配置 `JAVA_HOME`）
-- Android SDK（配置 `ANDROID_HOME` 或 `local.properties`）
-- Gradle 8.9（项目内 wrapper）
-- AGP 8.7.3
-- Kotlin 2.0.21
+轻跳没有前台常驻服务，也没有常驻通知。核心是无障碍服务，由 Android 系统托管。
 
-项目路径含中文，`gradle.properties` 已启用：
+- 无障碍服务保持开启时，系统会在进程回收后重新绑定。
+- 最近任务卡片通过 `excludeFromRecents` 隐藏。
+- 桌面图标保留，方便打开设置和卸载。
+- OEM 省电策略可能暂停无障碍服务。
 
-```properties
-android.overridePathCheck=true
-```
+OEM 额外设置：
 
-构建命令：
-
-```powershell
-$env:JAVA_HOME = '<你的 JDK 17 路径>'
-$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
-.\gradlew.bat assembleDebug assembleRelease --console=plain
-```
+- 小米 / Redmi：省电策略 → 无限制；自启动 → 允许
+- 华为：应用启动管理 → 手动管理 → 允许自启动 / 关联启动 / 后台活动
+- OPPO / vivo：允许自启动与后台运行
+- 一加 / realme：电池 → 不限制；允许自启动
 
 ## 技术结构
 
 ```text
 app/src/main/java/com/lightskip/app/
-├── MainActivity.kt                 主界面、首页/应用/设置
-├── OnboardingActivity.kt           欢迎、授权、应用推荐
+├── MainActivity.kt                 首页 / 应用 / 设置
+├── OnboardingActivity.kt           引导与授权
 ├── data/
-│   ├── AppEntry.kt
-│   ├── AppRepository.kt            桌面可见应用、推荐清单
-│   ├── Prefs.kt                    设置与守护包名
-│   └── LocalStats.kt               本地统计
+│   ├── AppRepository.kt            可见应用
+│   ├── Prefs.kt                    设置、学习状态、目标包缓存
+│   ├── PopupMode.kt                弹窗模式
+│   ├── RuleLearningStore.kt        多规则学习与相对区域
+│   └── LocalStats.kt               本机统计
 ├── service/
-│   ├── SkipAccessibilityService.kt 无障碍服务入口
-│   ├── SkipSessionController.kt    6 秒短会话状态机
+│   ├── SkipAccessibilityService.kt 事件入口与学习状态机
+│   ├── SkipSessionController.kt    开屏短会话
+│   ├── PopupSessionController.kt   弹窗学习/执行
 │   ├── NodeScanner.kt              有界节点遍历
-│   └── RuleEngine.kt               文本归一化与匹配
-├── ui/
-│   ├── LogoView.kt
-│   ├── ToggleView.kt
-│   └── OrbitView.kt
-└── util/
-    ├── AccessibilityUtils.kt
-    ├── SystemBarUtils.kt
-    └── UiUtils.kt
+│   ├── RuleEngine.kt               文本 / ID / 位置规则
+│   └── DiagnosticsStore.kt         本机诊断
+└── ui/                             列表、Logo、Toggle
 ```
 
 核心流程：
 
 ```text
 目标 App 进入前台
-  → 确认包名在守护清单
-  → 启动 6 秒会话
-  → 窗口内容变化 / 定时扫描
+  → 开启 10 秒短会话（兼容模式）
+  → 只在目标窗口内扫描
   → 找到「跳过」候选
   → ACTION_CLICK
-  → 失败则 dispatchGesture 兜底
-  → 成功或超时立即结束
+  → 失败则 dispatchGesture
+  → 成功或超时结束
+
+学习模式
+  → 选择 App 并自动打开
+  → 等待开屏跳过
+  → 进入记录状态
+  → 用户逐个点击广告 X
+  → 最多保存 5 条规则
+  → 返回轻跳结束
 ```
 
-规则默认匹配：
+## 构建
 
-```text
-跳过
-跳过广告
-跳过 5
-跳过5s
-5秒跳过
-跳过广告 5
+环境：
+
+- JDK 17
+- Android SDK 36
+- Gradle 8.9（项目内 wrapper）
+- AGP 8.7.3
+- Kotlin 2.0.21
+
+```powershell
+$env:JAVA_HOME = '<你的 JDK 17 路径>'
+$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+.\gradlew.bat assembleDebug assembleRelease lintDebug --console=plain
 ```
 
-「关闭广告」默认关闭，需要在设置里手动开启。无文字 `×` 不识别。
+构建产物：
 
-## 轻量与隐私
-
-- 不申请 `INTERNET`
-- 不申请 `QUERY_ALL_PACKAGES`
-- 不使用悬浮窗
-- 不使用前台常驻服务
-- 不注册开机广播
-- 不持有 WakeLock
-- 不截图、不做 OCR
-- 不保存界面文本或画面
-- 统计只保存在本机 `SharedPreferences`
-
-APK 权限只有：
-
-```text
-android.permission.VIBRATE
-```
-
-## 后台运行、省电与最近任务
-
-轻跳没有前台常驻服务，也不会显示常驻通知。核心是无障碍服务，由 Android 系统托管：
-
-- 只要用户在系统设置里保持无障碍服务开启，系统会在进程被回收后重新绑定。
-- 不轮询、不持有 WakeLock、不注册开机广播；只在目标 App 进入前台后的短会话里工作。
-- 首页/设置界面不是服务；离开应用后 UI 会被释放，只保留无障碍服务。
-- 已通过 `android:excludeFromRecents="true"` 隐藏最近任务卡片。桌面图标仍然保留，方便随时打开和卸载。
-- 设置页新增「后台稳定运行」入口，打开系统电池优化列表。轻跳不申请 `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`，需要用户手动把轻跳设为「不限制」。
-
-OEM 额外设置：
-
-- 小米：省电策略 → 无限制；自启动 → 允许
-- 华为：应用启动管理 → 手动管理 → 允许自启动 / 关联启动 / 后台活动
-- OPPO / vivo：允许自启动与后台运行
-- 一加 / realme：电池 → 不限制；允许自启动
-
-如果系统仍然回收服务，优先检查无障碍服务是否被系统关闭，以及 OEM 的「后台冻结 / 深度睡眠」设置。
-
-「隐藏后台页面」隐藏的是最近任务卡片，不是桌面图标，也不是从系统设置里隐身。隐藏桌面图标会让应用难以找到和卸载，不采用。
-
-实际耗电和内存必须在真机上用 `adb shell dumpsys meminfo com.lightskip.app` 和 Battery Historian 测量；当前没有设备，不能给出真实数值。
-
-## 性能优化
-
-- 应用列表改为 `ListView` + `BaseAdapter` 复用行，不再一次性创建 113 行 View。
-- 离开主界面时 `onStop` 调用 `finishAndRemoveTask()` 释放 UI，只保留无障碍服务；重新打开从首页开始。
-- 同一应用会话结束后 8 秒内不重复启动；只有前台包名变化时才开启新会话。
-- 实测（Android 真机，Debug 包）：
-  - 离开 UI 后 `Views = 0`、`Activities = 0`
-  - 后台 PSS 约 `59.5 MB`（会随系统和机型变化）
-  - 空闲 CPU `0%`
-  - Release APK 约 `115 KB`
-- 仍然没有前台服务、常驻通知、轮询、WakeLock 或开机广播。
-
-应用清单越大，打开任意被守护应用都会启动一次短会话。建议只保留真正有开屏广告的 20–30 个应用；「全选」适合临时批量开启，不建议长期全选。
+- Debug：`app/build/outputs/apk/debug/app-debug.apk`
+- Release：`app/build/outputs/apk/release/app-release.apk`
+- 便于安装的副本：`dist/LightSkip-0.2.apk`
 
 ## 已知限制
 
 - 不能保证 100% 跳过。
-- 纯图片、Canvas、WebView、`FLAG_SECURE` 页面可能没有可读文本。
-- 自定义绘制且没有无障碍标签的按钮无法识别。
-- 跳过按钮在倒计时结束前隐藏的广告，只能在 6 秒窗口内等待。
-- 部分 App 的正常内容里也有「跳过」，位置启发式只能降低误触。
-- OEM 省电策略可能延迟或终止服务。
-- 无障碍 API 跳广告存在 Google Play 政策风险，侧载或自有渠道更现实。
+- 纯图片、Canvas、SurfaceView、`FLAG_SECURE` 页面可能没有可访问节点。
+- 没有 `viewId` / `contentDescription` 的关闭按钮依赖相对区域和小型可点击节点兜底。
+- 区域规则会先确认该区域存在小型可点击节点，不会盲点。
+- OEM 省电策略、无障碍服务冲突、系统权限弹窗可能影响识别。
+- Redmi K70 / HyperOS 3.0.307.0、QQ 音乐、百度地图仍需对应真机复测。
+- 无 Xiaomi 17 实机，发热优化通过事件订阅、扫描预算和 MEIZU 21 采样验证。
 
-## 验收清单
+## 测试记录
 
-- [x] Debug / Release 构建通过
-- [x] R8 + 资源压缩通过
-- [x] Release APK 可使用 v2 签名验证
-- [x] 权限只有 `VIBRATE`
-- [x] 无 `INTERNET` 权限
-- [x] 5 个页面与完整引导流程
-- [x] 6 秒 / 3 次短会话
-- [x] 文本规则与节点扫描
-- [x] 本地统计与清除
-- [x] 真机验证跳过成功率（测试页 / 微博 / 系统浏览器）
-- [ ] 真机验证后台存活 24 小时
-- [x] 真机测量后台内存（约 59.5 MB PSS）
-- [ ] 长时间耗电测量
-- [ ] 确认最近任务卡片已隐藏
-- [ ] 真机验证冷启动
-- [ ] 目标 App 误触回归测试
+- `assembleDebug`：通过
+- `assembleRelease`：通过
+- `lintDebug`：`0 errors, 160 warnings`
+- Release v2 签名校验：通过
+- 无危险权限：通过
+- 连续两次内置开屏：通过
+- 多 X 学习（2 条规则）：通过
+- 学习后自动关闭弹窗：通过
+- 真实 App 自动拉起：通过
+- 会话结束后低频事件收缩：通过
 
 ## 设计稿
 
@@ -239,3 +191,4 @@ OEM 额外设置：
 - `design/mockup.html`
 - `design/mockup.css`
 - `docs/design-proposal.md`
+- `docs/v0.2-proposal.md`

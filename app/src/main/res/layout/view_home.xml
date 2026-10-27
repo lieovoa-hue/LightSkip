@@ -15,7 +15,7 @@
         android:paddingLeft="20dp"
         android:paddingTop="14dp"
         android:paddingRight="20dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -30,19 +30,17 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/home_greeting"
                     style="@style/Text.Micro"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/home_greeting" />
+                    android:text="@string/app_name" />
 
                 <TextView
-                    android:id="@+id/home_title"
                     style="@style/Text.H1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="@string/home_title" />
+                    android:text="@string/home_status_title" />
             </LinearLayout>
 
             <com.lightskip.app.ui.LogoView
@@ -53,7 +51,7 @@
         <FrameLayout
             android:id="@+id/guard_card"
             android:layout_width="match_parent"
-            android:layout_height="190dp"
+            android:layout_height="176dp"
             android:layout_marginTop="14dp"
             android:background="@drawable/bg_guard"
             android:padding="15dp">
@@ -97,9 +95,8 @@
                         android:id="@+id/master_toggle"
                         android:layout_width="38dp"
                         android:layout_height="22dp"
-                        android:contentDescription="@string/guarding"
-                        app:lightStyle="true"
-                        xmlns:app="http://schemas.android.com/apk/res-auto" />
+                        android:contentDescription="@string/guard_switch"
+                        app:lightStyle="true" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -130,14 +127,10 @@
                         android:textColor="@color/mint"
                         android:textSize="11sp" />
 
-                    <Space
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
                         android:layout_marginBottom="5dp"
                         android:text="@string/today_skipped"
                         android:textColor="@color/white_62"
@@ -151,34 +144,13 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_clock"
-                        android:tint="@color/lime" />
-
                     <TextView
-                        android:id="@+id/home_saved"
+                        android:id="@+id/home_app_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="@string/saved_zero"
+                        android:text="@string/apps_zero"
                         android:textColor="@color/white_72"
                         android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:background="@drawable/bg_demo_tag"
-                        android:paddingLeft="4dp"
-                        android:paddingTop="2dp"
-                        android:paddingRight="4dp"
-                        android:paddingBottom="2dp"
-                        android:text="@string/estimate"
-                        android:textColor="@color/white_72"
-                        android:textSize="8sp" />
 
                     <Space
                         android:layout_width="0dp"
@@ -186,10 +158,9 @@
                         android:layout_weight="1" />
 
                     <TextView
-                        android:id="@+id/home_app_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/apps_zero"
+                        android:text="@string/home_local_only"
                         android:textColor="@color/white_62"
                         android:textSize="9.5sp" />
                 </LinearLayout>
@@ -198,264 +169,25 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card"
-                android:orientation="vertical"
-                android:padding="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/Text.Micro"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/stat_response"
-                        android:textSize="9.5sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:background="@drawable/bg_success_pill"
-                        android:paddingLeft="5dp"
-                        android:paddingTop="2dp"
-                        android:paddingRight="5dp"
-                        android:paddingBottom="2dp"
-                        android:text="@string/local_tag"
-                        android:textColor="@color/forest_text"
-                        android:textSize="7.5sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/stat_response"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:text="--"
-                        android:textColor="@color/ink"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="3dp"
-                        android:text="@string/seconds_unit"
-                        android:textColor="@color/muted"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <TextView
-                    style="@style/Text.Micro"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stat_response_sub"
-                    android:textSize="8.5sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card"
-                android:orientation="vertical"
-                android:padding="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/Text.Micro"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/stat_sessions"
-                        android:textSize="9.5sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:background="@drawable/bg_success_pill"
-                        android:paddingLeft="5dp"
-                        android:paddingTop="2dp"
-                        android:paddingRight="5dp"
-                        android:paddingBottom="2dp"
-                        android:text="@string/local_tag"
-                        android:textColor="@color/forest_text"
-                        android:textSize="7.5sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/stat_sessions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:text="0"
-                        android:textColor="@color/ink"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="2dp"
-                        android:layout_marginBottom="3dp"
-                        android:text="@string/times"
-                        android:textColor="@color/muted"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <TextView
-                    style="@style/Text.Micro"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/stat_sessions_sub"
-                    android:textSize="8.5sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_card"
-            android:orientation="vertical"
-            android:padding="11dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/Text.Section"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/recent_title" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    style="@style/Text.Micro"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/recent_local"
-                    android:textSize="9sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/recent_icon"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:background="@drawable/bg_app_icon"
-                    android:gravity="center"
-                    android:text="?"
-                    android:textColor="@color/on_forest"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/recent_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/recent_empty_name"
-                        android:textColor="@color/ink"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/recent_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="1dp"
-                        android:text="@string/recent_empty_sub"
-                        android:textColor="@color/muted"
-                        android:textSize="9.5sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/recent_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_success_pill"
-                    android:paddingLeft="7dp"
-                    android:paddingTop="4dp"
-                    android:paddingRight="7dp"
-                    android:paddingBottom="4dp"
-                    android:text="@string/skipped"
-                    android:textColor="@color/forest_text"
-                    android:textSize="9sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_card"
             android:orientation="vertical"
             android:paddingLeft="12dp"
-            android:paddingTop="2dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="2dp">
+            android:paddingRight="12dp">
+
+            <TextView
+                style="@style/Text.Section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:paddingBottom="4dp"
+                android:text="@string/one_click_check" />
 
             <LinearLayout
-                android:id="@+id/quick_scope_row"
+                android:id="@+id/check_accessibility"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="52dp"
                 android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
@@ -465,7 +197,7 @@
                 <ImageView
                     style="@style/IconTile"
                     android:contentDescription="@null"
-                    android:src="@drawable/ic_scan" />
+                    android:src="@drawable/ic_shield" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -478,22 +210,32 @@
                         style="@style/Text.Body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/quick_scope"
-                        android:textSize="11.5sp"
+                        android:text="@string/check_accessibility"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/quick_scope_sub"
                         style="@style/Text.Micro"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/quick_scope_sub_zero"
-                        android:textSize="9.5sp" />
+                        android:id="@+id/check_accessibility_sub"
+                        android:text="@string/check_accessibility_sub"
+                        android:textSize="9sp" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_accessibility_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/status_off"
+                    android:textColor="@color/amber_text"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="15dp"
                     android:layout_height="15dp"
+                    android:layout_marginStart="4dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_chevron_right"
                     android:tint="@color/nav_inactive" />
@@ -505,55 +247,9 @@
                 android:background="@color/row_divider" />
 
             <LinearLayout
+                android:id="@+id/check_background"
                 android:layout_width="match_parent"
-                android:layout_height="46dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    style="@style/IconTile"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_vibrate" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/Text.Body"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/quick_vibrate"
-                        android:textSize="11.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        style="@style/Text.Micro"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/quick_vibrate_sub"
-                        android:textSize="9.5sp" />
-                </LinearLayout>
-
-                <com.lightskip.app.ui.ToggleView
-                    android:id="@+id/quick_vibrate"
-                    android:layout_width="38dp"
-                    android:layout_height="22dp"
-                    android:contentDescription="@string/quick_vibrate" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/row_divider" />
-
-            <LinearLayout
-                android:id="@+id/quick_window_row"
-                android:layout_width="match_parent"
-                android:layout_height="46dp"
+                android:layout_height="52dp"
                 android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
@@ -563,7 +259,7 @@
                 <ImageView
                     style="@style/IconTile"
                     android:contentDescription="@null"
-                    android:src="@drawable/ic_clock" />
+                    android:src="@drawable/ic_battery" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -576,27 +272,165 @@
                         style="@style/Text.Body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/quick_window"
-                        android:textSize="11.5sp"
+                        android:text="@string/check_background"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/quick_window_sub"
                         style="@style/Text.Micro"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/quick_window_sub_default"
-                        android:textSize="9.5sp" />
+                        android:text="@string/check_background_sub"
+                        android:textSize="9sp" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_background_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/status_unknown"
+                    android:textColor="@color/amber_text"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="15dp"
                     android:layout_height="15dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right"
+                    android:tint="@color/nav_inactive" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/row_divider" />
+
+            <LinearLayout
+                android:id="@+id/check_apps"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_apps" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_apps"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        style="@style/Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_apps_sub"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_apps_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/apps_zero"
+                    android:textColor="@color/forest_text"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right"
+                    android:tint="@color/nav_inactive" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/row_divider" />
+
+            <LinearLayout
+                android:id="@+id/check_popup"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_close" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_popup"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        style="@style/Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_popup_sub"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/check_popup_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/popup_off"
+                    android:textColor="@color/muted"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginStart="4dp"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_chevron_right"
                     android:tint="@color/nav_inactive" />
             </LinearLayout>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/home_test_splash"
+            style="@style/PrimaryButton"
+            android:layout_marginTop="12dp"
+            android:text="@string/test_splash"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"
