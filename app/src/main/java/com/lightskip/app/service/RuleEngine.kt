@@ -8,7 +8,11 @@ object RuleEngine {
     private val skipPatterns = listOf(
         Regex("^跳过(广告)?$"),
         Regex("^跳过(广告)?\\d{1,2}(s|秒)?$"),
-        Regex("^\\d{1,2}(s|秒)?跳过$")
+        Regex("^\\d{1,2}(s|秒)?跳过$"),
+        Regex("^点击跳过(广告)?$"),
+        Regex("^广告\\d{0,2}(s|秒)?跳过$"),
+        Regex("^\\d{1,2}(s|秒)?点击跳过$"),
+        Regex("^点击关闭(广告)?$")
     )
 
     private val rejectedFragments = listOf(
@@ -92,7 +96,7 @@ object RuleEngine {
 
         var score = when {
             textHit && text == "跳过" -> 120
-            textHit && text in setOf("关闭广告", "关闭") -> 100
+            textHit && (text in setOf("关闭广告", "关闭") || text.startsWith("点击关闭")) -> 100
             textHit && text in setOf("×", "x") -> 85
             textHit && text.startsWith("跳过") -> 100
             textHit && text.endsWith("跳过") -> 90
@@ -165,7 +169,6 @@ object RuleEngine {
         if (text.isEmpty() || text.length > 10) return false
         if (rejectedFragments.any { text.contains(it) }) return false
         if (text in setOf("关闭广告", "关闭", "×", "x")) return true
-        if (text.length <= 8 && (text.contains("跳过") || text.contains("关闭广告"))) return true
         return skipPatterns.any { it.matches(text) }
     }
 }

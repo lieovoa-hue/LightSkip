@@ -271,6 +271,13 @@ class NodeScanner(private val rules: RuleEngine = RuleEngine) {
             "com.xiaomi.ad"
         )
 
+        val NON_SKIPPABLE_PACKAGES = setOf(
+            "com.android.settings",
+            "com.android.systemui",
+            "com.miui.home",
+            "com.meizu.flyme.launcher"
+        )
+
         fun allowedPackages(targetPackage: String): Set<String> {
             if (SYSTEM_AD_PACKAGES.isEmpty()) return setOf(targetPackage)
             return SYSTEM_AD_PACKAGES + targetPackage

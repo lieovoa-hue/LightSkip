@@ -4,7 +4,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.3.6 能力
+## v0.3.7 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行手动学习规则或导入的李跳跳规则。
@@ -16,6 +16,15 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 后台状态：区分 Android 电池白名单、厂商后台限制、AppOps 和待机分组，避免误报“受限”。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
 - 轻量低功耗：空闲只订阅状态、窗口和点击事件；完整窗口与内容事件仅在短会话或学习时开启。
+
+### v0.3.7 防误点与学习节点兜底
+
+- 修复 `轻跳 · 开屏跳过` 被系统设置页误识别为广告并点击的问题。
+- 移除过宽的“文本包含跳过”规则，改为明确的 `点击跳过`、`广告3s跳过`、`点击关闭广告` 等格式。
+- 系统设置、System UI、桌面加入不可守护名单，即使被勾选也不会自动扫描。
+- `event.source` 根节点兜底同时接入学习模式，HyperOS 事件源可用时学习也能拿到节点。
+- 学习点击后仍无窗口时，提示“系统未暴露窗口”，不再误导用户重复点 X。
+- MEIZU 21 实测：系统无障碍页跳过计数保持不变（`43 → 43`），测试开屏仍正常跳过（`43 → 44`）。
 
 ### v0.3.6 事件源窗口兜底
 
@@ -120,17 +129,17 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 ## 下载
 
-- v0.3.6 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.6
-- Release APK：`dist/LightSkip-0.3.6.apk`
+- v0.3.7 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.7
+- Release APK：`dist/LightSkip-0.3.7.apk`
 - 带测试开屏、双 X 弹窗、延迟弹窗和规则测试入口的 Debug APK：
-  `dist/LightSkip-0.3.6-debug-with-demo.apk`
+  `dist/LightSkip-0.3.7-debug-with-demo.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`145,037` 字节，约 `142 KB`
-- Debug APK：`1,022,006` 字节，约 `998 KB`
+- Release APK：`145,477` 字节，约 `142 KB`
+- Debug APK：`1,077,898` 字节，约 `1.03 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -233,13 +242,14 @@ MEIZU 21 / Android 16 实测：
 - 点击底部「设置」停留在 MainActivity；点击无障碍入口先显示确认框，取消后不跳转；
 - 打开搜索输入法后无障碍服务仍连接，测试开屏跳过计数 `39 → 40`；
 - event.source 备用窗口兜底加入后，测试开屏跳过计数 `41 → 42`；
+- 系统无障碍页不再误点“轻跳 · 开屏跳过”，跳过计数保持 `43 → 43`；测试开屏 `43 → 44`；
 - 空闲 CPU 采样 `0%`；
 - Release 服务空闲 PSS 约 `25 MB`（`25,600 KB`）；
 - 会话结束后事件类型收缩回低频集合。
 
 ## 安装与使用
 
-1. 安装 `dist/LightSkip-0.3.6.apk`。
+1. 安装 `dist/LightSkip-0.3.7.apk`。
 2. 打开轻跳，进入系统无障碍设置开启服务。
 3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
 4. 在应用页选择守护 App。
@@ -283,7 +293,7 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.3.6.apk`
+- `dist/LightSkip-0.3.7.apk`
 
 验证结果：`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
 `0 errors / 105 warnings / 0 unused resources`。

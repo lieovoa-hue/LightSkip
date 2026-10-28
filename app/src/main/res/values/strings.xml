@@ -48,6 +48,7 @@
     <string name="learning_rule_duplicate">这个关闭按钮已经记录过了</string>
     <string name="learning_rule_limit">已记录 5 个关闭按钮，学习完成</string>
     <string name="learning_invalid_close">请点广告上的 X、关闭或跳过按钮，不要点整张广告</string>
+    <string name="learning_window_blocked">系统未向无障碍服务暴露该窗口，无法学习控件。请改用导入规则，或保留小窗后再试</string>
     <string name="learning_finished_format">学习结束，本次记录 %1$d 个关闭按钮</string>
     <string name="learning_finished_none">学习结束，本次未记录规则</string>
     <string name="learning_launch_failed">无法自动打开该应用，请手动打开后重试</string>
@@ -72,7 +73,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 多窗口</string>
-    <string name="version_line_02">轻跳 0.3.6 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.3.7 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>
@@ -127,7 +128,7 @@
     <string name="apps_count_format">%d 个应用</string>
     <string name="home_privacy">不读取输入框 · 不保存画面 · 无网络权限</string>
 
-    <string name="beta_version">v0.3.6</string>
+    <string name="beta_version">v0.3.7</string>
     <string name="skip_label">跳过</string>
     <string name="check_done">已自动跳过</string>
     <string name="ad_tag">AD</string>
@@ -137,7 +138,7 @@
     <string name="settings_status_sub_paused">轻跳已连接，当前暂停识别</string>
     <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">守护范围</string>
     <string name="apps_summary_zero">0 个已启用 · 0 个已排除</string>
-    <string name="version_short">轻跳 0.3.6</string>    <string name="apps_page_title">选择要守护的应用</string>
+    <string name="version_short">轻跳 0.3.7</string>    <string name="apps_page_title">选择要守护的应用</string>
     <string name="apps_summary_format">%1$d 个已启用 · %2$d 个已排除</string>
     <string name="filter_count_format">%1$s %2$d</string>
     <string name="filter_all">全部</string>

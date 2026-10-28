@@ -122,7 +122,7 @@ class SkipAccessibilityService : AccessibilityService() {
                 (lastForegroundActivityClass.contains("Demo") &&
                     lastForegroundActivityClass.contains("Popup")))
         val watched = prefs.masterEnabled &&
-            (prefs.isTarget(packageName) || isDemoSplash || isDemoPopup)
+            (isSkippablePackage(packageName) || isDemoSplash || isDemoPopup)
         val learningClick = eventType == AccessibilityEvent.TYPE_VIEW_CLICKED &&
             prefs.learningMode &&
             prefs.learningTargetPackage.isNotBlank()
@@ -167,6 +167,7 @@ class SkipAccessibilityService : AccessibilityService() {
 
                 recordDiagnostics(packageName, eventType, className)
                 lastForegroundActivityClass = className
+                val rootHint = resolveRootHint(event.source, packageName)
                 if (prefs.learningMode && packageName == prefs.learningTargetPackage) {
                     scheduleLearningArm(packageName)
                 }
@@ -175,20 +176,25 @@ class SkipAccessibilityService : AccessibilityService() {
                         packageName,
                         bypassTargetCheck = true,
                         restartImmediately = foregroundChanged,
-                        rootHint = resolveRootHint(event.source, packageName)
+                        rootHint = rootHint
                     )
                     isDemoPopup -> popupController.onWindowEvent(
                         packageName,
                         lastForegroundActivityClass,
-                        bypassTargetCheck = true
+                        bypassTargetCheck = true,
+                        rootHint = rootHint
                     )
                     else -> {
                         controller.onForeground(
                             packageName,
                             restartImmediately = foregroundChanged,
-                            rootHint = resolveRootHint(event.source, packageName)
+                            rootHint = rootHint
                         )
-                        popupController.onWindowEvent(packageName, lastForegroundActivityClass)
+                        popupController.onWindowEvent(
+                            packageName,
+                            lastForegroundActivityClass,
+                            rootHint = rootHint
+                        )
                     }
                 }
                 lastForegroundPackage = packageName
@@ -202,7 +208,8 @@ class SkipAccessibilityService : AccessibilityService() {
                 if (learningWatching) {
                     popupController.captureLearningCandidates(
                         prefs.learningTargetPackage,
-                        lastForegroundActivityClass
+                        lastForegroundActivityClass,
+                        resolveRootHint(event.source, prefs.learningTargetPackage)
                     )
                 }
                 controller.onContentChanged(packageName)
@@ -210,7 +217,8 @@ class SkipAccessibilityService : AccessibilityService() {
                     popupController.onWindowEvent(
                         packageName,
                         lastForegroundActivityClass,
-                        bypassTargetCheck = isDemoPopup
+                        bypassTargetCheck = isDemoPopup,
+                        rootHint = resolveRootHint(event.source, packageName)
                     )
                 }
             }
@@ -222,7 +230,8 @@ class SkipAccessibilityService : AccessibilityService() {
                 if (learningWatching) {
                     popupController.captureLearningCandidates(
                         prefs.learningTargetPackage,
-                        lastForegroundActivityClass
+                        lastForegroundActivityClass,
+                        resolveRootHint(event.source, prefs.learningTargetPackage)
                     )
                 }
                 val popupWatching = popupController.isRunning || shouldWatchForegroundPopup()
@@ -323,8 +332,13 @@ class SkipAccessibilityService : AccessibilityService() {
             return false
         }
         val packageName = lastForegroundPackage ?: return false
-        if (!prefs.isTarget(packageName) && packageName != this.packageName) return false
+        if (!isSkippablePackage(packageName) && packageName != this.packageName) return false
         return popupController.hasRules(packageName)
+    }
+
+    private fun isSkippablePackage(packageName: String): Boolean {
+        return prefs.isTarget(packageName) &&
+            !NodeScanner.NON_SKIPPABLE_PACKAGES.contains(packageName)
     }
 
     private fun currentWindowBounds(): Rect {

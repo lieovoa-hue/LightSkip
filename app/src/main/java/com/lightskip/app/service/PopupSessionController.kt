@@ -51,6 +51,7 @@ class PopupSessionController(
     private var sessionImportedRules: List<ImportedRuleStore.PopupRule> = emptyList()
     private var learningCandidate: LearningNode? = null
     private var lastLearningCaptureAt = 0L
+    private var sessionRootHint: AccessibilityNodeInfo? = null
 
     private data class LearningNode(
         val packageName: String,
@@ -64,7 +65,12 @@ class PopupSessionController(
         val capturedAt: Long
     )
 
-    fun onWindowEvent(packageName: String, activityClass: String, bypassTargetCheck: Boolean = false) {
+    fun onWindowEvent(
+        packageName: String,
+        activityClass: String,
+        bypassTargetCheck: Boolean = false,
+        rootHint: AccessibilityNodeInfo? = null
+    ) {
         if (!prefs.masterEnabled) return
         if (!bypassTargetCheck && !prefs.isTarget(packageName)) return
         if (prefs.learningMode) return
@@ -76,12 +82,13 @@ class PopupSessionController(
         val now = SystemClock.uptimeMillis()
         if (packageName == lastClosedPackage && now - lastClosedAt < 2_000L) return
         if (active && targetPackage == packageName) {
+            if (sessionRootHint == null) sessionRootHint = rootHint
             targetActivityClass = activityClass
             handler.removeCallbacks(contentScanRunnable)
             handler.postDelayed(contentScanRunnable, CONTENT_SCAN_DELAY_MS)
             return
         }
-        start(packageName, activityClass, now, probe = rules.isEmpty())
+        start(packageName, activityClass, now, probe = rules.isEmpty(), rootHint = rootHint)
     }
 
     fun onContentChanged(packageName: String, activityClass: String = "") {
@@ -106,7 +113,11 @@ class PopupSessionController(
         return rulesFor(packageName).isNotEmpty() || importedStore.hasRules(packageName)
     }
 
-    fun captureLearningCandidates(packageName: String, activityClass: String) {
+    fun captureLearningCandidates(
+        packageName: String,
+        activityClass: String,
+        rootHint: AccessibilityNodeInfo? = null
+    ) {
         if (!prefs.learningMode || prefs.learningTargetPackage != packageName) return
         val now = SystemClock.uptimeMillis()
         if (now - lastLearningCaptureAt < 300L) return
@@ -114,7 +125,7 @@ class PopupSessionController(
 
         val metrics = service.resources.displayMetrics
         val nodes = scanner.collectNodes(
-            roots = rootsFor(packageName),
+            roots = rootsFor(packageName, rootHint),
             targetPackage = packageName,
             screenWidth = metrics.widthPixels,
             screenHeight = metrics.heightPixels
@@ -199,7 +210,12 @@ class PopupSessionController(
         }
 
         if (saveLearningCandidate(packageName, activityClass)) return
-        Toast.makeText(service, R.string.learning_invalid_close, Toast.LENGTH_LONG).show()
+        val message = if (rootsFor(packageName).isEmpty()) {
+            R.string.learning_window_blocked
+        } else {
+            R.string.learning_invalid_close
+        }
+        Toast.makeText(service, message, Toast.LENGTH_LONG).show()
     }
 
     private fun saveLearningCandidate(packageName: String, activityClass: String): Boolean {
@@ -249,11 +265,18 @@ class PopupSessionController(
         return true
     }
 
-    private fun start(packageName: String, activityClass: String, now: Long, probe: Boolean) {
+    private fun start(
+        packageName: String,
+        activityClass: String,
+        now: Long,
+        probe: Boolean,
+        rootHint: AccessibilityNodeInfo? = null
+    ) {
         reset()
         active = true
         targetPackage = packageName
         targetActivityClass = activityClass
+        sessionRootHint = rootHint
         scanLimit = if (probe) PROBE_SCAN_LIMIT else SCAN_LIMIT
         contentScanLimit = if (probe) 1 else CONTENT_SCAN_LIMIT
         sessionImportedRules = importedStore.getRules(packageName)
@@ -488,10 +511,13 @@ class PopupSessionController(
 
     private fun roots(): List<AccessibilityNodeInfo> {
         val target = targetPackage ?: return emptyList()
-        return rootsFor(target)
+        return rootsFor(target, sessionRootHint)
     }
 
-    private fun rootsFor(target: String): List<AccessibilityNodeInfo> {
+    private fun rootsFor(
+        target: String,
+        extraRoot: AccessibilityNodeInfo? = null
+    ): List<AccessibilityNodeInfo> {
         val result = mutableListOf<AccessibilityNodeInfo>()
         val seenWindows = mutableSetOf<Int>()
 
@@ -503,6 +529,7 @@ class PopupSessionController(
         }
 
         addRoot(service.rootInActiveWindow)
+        addRoot(extraRoot)
         service.windows.forEach { addRoot(it.root) }
         return result
     }
@@ -533,6 +560,7 @@ class PopupSessionController(
             return
         }
         active = false
+        sessionRootHint = null
         handler.removeCallbacksAndMessages(null)
         targetPackage = null
         targetActivityClass = ""
@@ -548,6 +576,7 @@ class PopupSessionController(
         active = false
         targetPackage = null
         targetActivityClass = ""
+        sessionRootHint = null
         attempts = 0
         scanCount = 0
         contentScanCount = 0
