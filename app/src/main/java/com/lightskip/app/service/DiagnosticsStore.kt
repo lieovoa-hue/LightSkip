@@ -156,6 +156,7 @@ object DiagnosticsStore {
         )
         builder.appendLine("diagnosis: ${diagnose(prefs)}")
         builder.appendLine("compatibility: ${prefs.compatibilityMode}")
+        builder.appendLine("hide background task: ${prefs.hideBackgroundTask}")
         builder.appendLine("popup mode: ${prefs.popupMode.name}")
         builder.appendLine("imported apps: ${ImportedRuleStore(context).importedAppCount()}")
         builder.appendLine(

@@ -13,6 +13,7 @@ import com.lightskip.app.data.Prefs
 import com.lightskip.app.ui.AppListAdapter
 import com.lightskip.app.util.AccessibilityUtils
 import com.lightskip.app.util.SystemBarUtils
+import com.lightskip.app.util.TaskUtils
 
 class OnboardingActivity : Activity() {
 
@@ -30,6 +31,7 @@ class OnboardingActivity : Activity() {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
         repo = AppRepository(this)
+        TaskUtils.setExcludeFromRecents(this, prefs.hideBackgroundTask)
 
         if (prefs.onboardingDone) {
             startActivity(Intent(this, MainActivity::class.java))
@@ -42,6 +44,7 @@ class OnboardingActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        TaskUtils.setExcludeFromRecents(this, prefs.hideBackgroundTask)
         if (page == Page.PERMISSION) updatePermissionUi()
     }
 

@@ -26,6 +26,10 @@ class Prefs(context: Context) {
         get() = PopupMode.from(sp.getString(KEY_POPUP, PopupMode.OFF.name))
         set(value) = sp.edit().putString(KEY_POPUP, value.name).apply()
 
+    var hideBackgroundTask: Boolean
+        get() = sp.getBoolean(KEY_HIDE_BACKGROUND, false)
+        set(value) = sp.edit().putBoolean(KEY_HIDE_BACKGROUND, value).apply()
+
     var learningMode: Boolean
         get() = sp.getBoolean(KEY_LEARNING, false)
         set(value) = sp.edit().putBoolean(KEY_LEARNING, value).apply()
@@ -101,6 +105,7 @@ class Prefs(context: Context) {
         const val KEY_TARGETS = "target_packages"
         const val KEY_COMPAT = "compatibility_mode"
         const val KEY_POPUP = "popup_mode"
+        const val KEY_HIDE_BACKGROUND = "hide_background_task"
         const val KEY_LEARNING = "learning_mode"
         const val KEY_LEARNING_TARGET = "learning_target_package"
         const val KEY_LEARNING_ARMED = "learning_armed"

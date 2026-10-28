@@ -70,7 +70,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 多窗口</string>
-    <string name="version_line_02">轻跳 0.3.2 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.3.3 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>
@@ -125,7 +125,7 @@
     <string name="apps_count_format">%d 个应用</string>
     <string name="home_privacy">不读取输入框 · 不保存画面 · 无网络权限</string>
 
-    <string name="beta_version">v0.3.2</string>
+    <string name="beta_version">v0.3.3</string>
     <string name="skip_label">跳过</string>
     <string name="check_done">已自动跳过</string>
     <string name="ad_tag">AD</string>
@@ -135,7 +135,7 @@
     <string name="settings_status_sub_paused">轻跳已连接，当前暂停识别</string>
     <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">守护范围</string>
     <string name="apps_summary_zero">0 个已启用 · 0 个已排除</string>
-    <string name="version_short">轻跳 0.3.2</string>    <string name="apps_page_title">选择要守护的应用</string>
+    <string name="version_short">轻跳 0.3.3</string>    <string name="apps_page_title">选择要守护的应用</string>
     <string name="apps_summary_format">%1$d 个已启用 · %2$d 个已排除</string>
     <string name="filter_count_format">%1$s %2$d</string>
     <string name="filter_all">全部</string>
@@ -155,8 +155,12 @@
     <string name="background_stability">后台稳定运行</string>
     <string name="background_stability_sub">系统省电可能暂停无障碍服务</string>
     <string name="background_stability_value">去设置</string>
+    <string name="hide_background_task">隐藏后台任务</string>
+    <string name="hide_background_task_off_sub">保留最近任务，鸿蒙后台更稳定</string>
+    <string name="hide_background_task_on_sub">离开后从最近任务移除</string>
+    <string name="hide_background_task_warning">已开启隐藏后台任务。HarmonyOS 或部分系统可能因此冻结无障碍服务，若无法跳广告请关闭此项。</string>
     <string name="background_dialog_title">让轻跳保持后台运行</string>
-    <string name="background_dialog_body">轻跳不需要前台常驻服务。无障碍服务由系统托管，默认会在后台待命。\n\n状态说明：\n· 无限制：已加入 Android 电池优化白名单\n· 未受限：厂商后台限制已关闭，未加入白名单也能正常工作\n· 受限 / 需确认：建议检查以下设置\n\n· 设置 → 应用 → 轻跳 → 电池 → 不限制\n· 小米：省电策略 → 无限制；自启动 → 允许\n· 魅族：权限管理 → 后台管理 → 允许后台运行\n· 华为：应用启动管理 → 手动管理 → 允许自启动 / 后台活动\n· OPPO / vivo：允许自启动与后台运行\n\n轻跳不会申请忽略电池优化的特殊权限，也不会显示常驻通知。</string>
+    <string name="background_dialog_body">轻跳不需要前台常驻服务。无障碍服务由系统托管，默认会在后台待命。\n\n状态说明：\n· 无限制：已加入 Android 电池优化白名单\n· 未受限：厂商后台限制已关闭，未加入白名单也能正常工作\n· 受限 / 需确认：建议检查以下设置\n\n· 设置 → 应用 → 轻跳 → 电池 → 不限制\n· 小米：省电策略 → 无限制；自启动 → 允许\n· 魅族：权限管理 → 后台管理 → 允许后台运行\n· 华为：应用启动管理 → 手动管理 → 允许自启动 / 后台活动\n· OPPO / vivo：允许自启动与后台运行\n\nHarmonyOS 若只在开启小窗时生效：关闭「隐藏后台任务」，保留最近任务；再把轻跳加入后台/自启动白名单，必要时在最近任务中锁定。\n\n轻跳不会申请忽略电池优化的特殊权限，也不会显示常驻通知。</string>
     <string name="background_open_settings">打开电池设置</string>
     <string name="privacy">隐私说明</string>
     <string name="privacy_sub">看懂轻跳能做什么、不能做什么</string>

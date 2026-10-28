@@ -4,7 +4,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.3.2 能力
+## v0.3.3 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行手动学习规则或导入的李跳跳规则。
@@ -16,6 +16,16 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 后台状态：区分 Android 电池白名单、厂商后台限制、AppOps 和待机分组，避免误报“受限”。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
 - 轻量低功耗：空闲只订阅状态、窗口和点击事件；完整窗口与内容事件仅在短会话或学习时开启。
+
+### v0.3.3 后台任务开关与鸿蒙兼容
+
+- 设置页新增「隐藏后台任务」开关，默认关闭。
+- 默认保留最近任务，不再强制 `excludeFromRecents` 或每次离开都 `finishAndRemoveTask()`。
+- 开启隐藏后，任务仍会从最近任务移除；同时提示 HarmonyOS 可能因此冻结无障碍服务。
+- 修复设置页顶部状态卡片可点击但没有动作的问题。
+- 需要说明：小窗可用、后台不可用是系统冻结后台进程的表现；轻跳无法绕过 OEM 的后台冻结策略，只能避免自己主动移除任务。
+- MEIZU 21 实测：关闭隐藏时最近任务保留；开启隐藏时任务移除，但无障碍服务仍保持连接。
+- **没有 HarmonyOS 真机，不能声明鸿蒙后台问题已经实机修复。**
 
 ### v0.3.1 志愿汇修复
 
@@ -83,17 +93,17 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 ## 下载
 
-- v0.3.2 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.2
-- Release APK：`dist/LightSkip-0.3.2.apk`
+- v0.3.3 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.3
+- Release APK：`dist/LightSkip-0.3.3.apk`
 - 带测试开屏、双 X 弹窗、延迟弹窗和规则测试入口的 Debug APK：
-  `dist/LightSkip-0.3.2-debug-with-demo.apk`
+  `dist/LightSkip-0.3.3-debug-with-demo.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`142,589` 字节，约 `139 KB`
-- Debug APK：`1,055,595` 字节，约 `1.01 MB`
+- Release APK：`143,877` 字节，约 `140 KB`
+- Debug APK：`1,048,259` 字节，约 `1.00 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -113,6 +123,15 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 点击或手势被系统限制。
 
 轻跳已加入 HarmonyOS/EMUI 信息识别、事件链路计数和诊断结论。
+
+如果反馈是“小窗可用、普通后台不可用”：
+
+1. 关闭设置页的「隐藏后台任务」，保留最近任务。
+2. 在 HarmonyOS 应用启动管理中允许轻跳自启动、关联启动和后台活动。
+3. 在最近任务中锁定轻跳；部分鸿蒙版本仍需保持小窗或前台，才能持续接收无障碍事件。
+4. 打开诊断与反馈，分享 `hide background task`、事件计数和 `background` 状态。
+
+这是 HarmonyOS 后台冻结问题，轻跳无法通过普通 Android 权限绕过，不能承诺不保留任务也能在后台工作。
 
 ### HarmonyOS NEXT / 5+
 
@@ -181,13 +200,16 @@ MEIZU 21 / Android 16 实测：
 - 连续快速打开测试开屏 3 次：`skip_count 2 → 5`；
 - 服务关闭时点击首页卡片/开关，页面保持 MainActivity，不跳系统设置；
 - MEIZU 21 已允许“后台高耗电”但未加入 Doze 白名单：首页正确显示“未受限”；
+- 「隐藏后台任务」关闭时：离开应用后最近任务仍在，无障碍服务保持连接；
+- 「隐藏后台任务」开启时：离开应用后任务从最近任务移除，无障碍服务保持连接；
+- 保留最近任务时连续打开测试开屏 2 次，跳过计数 `22 → 24`；
 - 空闲 CPU 采样 `0%`；
-- Release 服务空闲 PSS 约 `23 MB`（`23,316 KB`）；
+- Release 服务空闲 PSS 约 `25 MB`（`25,600 KB`）；
 - 会话结束后事件类型收缩回低频集合。
 
 ## 安装与使用
 
-1. 安装 `dist/LightSkip-0.3.2.apk`。
+1. 安装 `dist/LightSkip-0.3.3.apk`。
 2. 打开轻跳，进入系统无障碍设置开启服务。
 3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
 4. 在应用页选择守护 App。
@@ -231,10 +253,10 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.3.2.apk`
+- `dist/LightSkip-0.3.3.apk`
 
 验证结果：`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
-`0 errors / 104 warnings / 0 unused resources`。
+`0 errors / 105 warnings / 0 unused resources`。
 
 ## 已知限制
 

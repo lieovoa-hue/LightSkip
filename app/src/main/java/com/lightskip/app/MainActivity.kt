@@ -32,6 +32,7 @@ import com.lightskip.app.ui.ToggleView
 import com.lightskip.app.util.AccessibilityUtils
 import com.lightskip.app.util.BackgroundStatusUtils
 import com.lightskip.app.util.SystemBarUtils
+import com.lightskip.app.util.TaskUtils
 import com.lightskip.app.util.formatCount
 
 class MainActivity : Activity() {
@@ -84,6 +85,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         keepTaskOnStop = false
+        TaskUtils.setExcludeFromRecents(this, prefs.hideBackgroundTask)
         if (prefs.learningMode) {
             learningUiHandler.removeCallbacks(finishLearningUiRunnable)
             learningUiHandler.postDelayed(finishLearningUiRunnable, 1_700L)
@@ -95,7 +97,11 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         super.onStop()
-        if (!keepTaskOnStop && !isChangingConfigurations && !isFinishing) {
+        if (prefs.hideBackgroundTask &&
+            !keepTaskOnStop &&
+            !isChangingConfigurations &&
+            !isFinishing
+        ) {
             finishAndRemoveTask()
         }
     }
@@ -387,6 +393,14 @@ class MainActivity : Activity() {
             AccessibilityUtils.openAccessibilitySettings(this)
         }
         findViewById<View>(R.id.row_background).setOnClickListener { showBackgroundDialog() }
+        findViewById<ToggleView>(R.id.toggle_hide_task).onCheckedChange = { enabled ->
+            prefs.hideBackgroundTask = enabled
+            TaskUtils.setExcludeFromRecents(this, enabled)
+            updateHideTaskRow()
+            if (enabled) {
+                Toast.makeText(this, R.string.hide_background_task_warning, Toast.LENGTH_LONG).show()
+            }
+        }
         findViewById<ToggleView>(R.id.toggle_compat).onCheckedChange = {
             prefs.compatibilityMode = it
             refreshHome()
@@ -445,6 +459,11 @@ class MainActivity : Activity() {
         }
 
         findViewById<ToggleView>(R.id.toggle_compat).setChecked(prefs.compatibilityMode, animate = false)
+        findViewById<ToggleView>(R.id.toggle_hide_task).setChecked(
+            prefs.hideBackgroundTask,
+            animate = false
+        )
+        updateHideTaskRow()
         findViewById<TextView>(R.id.value_popup).setText(popupModeLabel(prefs.popupMode))
         val importedCount = importedRules.importedAppCount()
         findViewById<TextView>(R.id.value_import_rules).text =
@@ -473,6 +492,16 @@ class MainActivity : Activity() {
     private fun popupModeLabel(mode: PopupMode): Int = when (mode) {
         PopupMode.OFF -> R.string.popup_off
         PopupMode.LEARNED -> R.string.popup_learned
+    }
+
+    private fun updateHideTaskRow() {
+        findViewById<TextView>(R.id.hide_background_task_sub).setText(
+            if (prefs.hideBackgroundTask) {
+                R.string.hide_background_task_on_sub
+            } else {
+                R.string.hide_background_task_off_sub
+            }
+        )
     }
 
     private fun showPopupModeDialog() {

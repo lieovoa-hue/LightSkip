@@ -37,9 +37,6 @@
             android:layout_height="68dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_guard"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="14dp"
@@ -205,6 +202,51 @@
                     android:contentDescription="@null"
                     android:src="@drawable/ic_chevron_right"
                     android:tint="@color/nav_inactive" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/row_divider" />
+
+            <LinearLayout
+                style="@style/SettingsRow"
+                android:orientation="horizontal">
+
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_lock" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hide_background_task"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/hide_background_task_sub"
+                        style="@style/Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hide_background_task_off_sub"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <com.lightskip.app.ui.ToggleView
+                    android:id="@+id/toggle_hide_task"
+                    android:layout_width="38dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="@string/hide_background_task" />
             </LinearLayout>
 
             <View
