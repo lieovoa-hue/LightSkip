@@ -45,24 +45,29 @@ class SkipSessionController(
 
     private var lastSignature: String? = null
     private var lastSignatureAt = 0L
+    private var rootHint: AccessibilityNodeInfo? = null
 
     fun onForeground(
         packageName: String,
         bypassTargetCheck: Boolean = false,
-        restartImmediately: Boolean = false
+        restartImmediately: Boolean = false,
+        rootHint: AccessibilityNodeInfo? = null
     ) {
         if (!prefs.masterEnabled || (!bypassTargetCheck && !prefs.isTarget(packageName))) {
             cancel()
             return
         }
-        if (active && targetPackage == packageName) return
+        if (active && targetPackage == packageName) {
+            if (this.rootHint == null) this.rootHint = rootHint
+            return
+        }
 
         val now = SystemClock.uptimeMillis()
         if (!restartImmediately && packageName == lastEndedPackage && now - lastEndedAt < 500L) {
             DiagnosticsStore.recordSplashScan(packageName, "session cooldown", null)
             return
         }
-        start(packageName, now)
+        start(packageName, now, rootHint)
     }
 
     fun onContentChanged(packageName: String) {
@@ -71,10 +76,11 @@ class SkipSessionController(
         handler.postDelayed(contentScanRunnable, CONTENT_SCAN_DELAY_MS)
     }
 
-    private fun start(packageName: String, now: Long) {
+    private fun start(packageName: String, now: Long, rootHint: AccessibilityNodeInfo?) {
         reset()
         active = true
         targetPackage = packageName
+        this.rootHint = rootHint
         startedAt = now
         deadline = now + prefs.effectiveWindowMs
         attempts = 0
@@ -248,6 +254,7 @@ class SkipSessionController(
         }
 
         addRoot(service.rootInActiveWindow)
+        addRoot(rootHint)
         if (prefs.compatibilityMode) {
             service.windows.forEach { addRoot(it.root) }
         }
@@ -263,6 +270,7 @@ class SkipSessionController(
         lastEndedPackage = targetPackage
         lastEndedAt = SystemClock.uptimeMillis()
         targetPackage = null
+        rootHint = null
         handler.removeCallbacksAndMessages(null)
         onActiveChanged()
     }
@@ -275,6 +283,7 @@ class SkipSessionController(
         handler.removeCallbacksAndMessages(null)
         active = false
         targetPackage = null
+        rootHint = null
         attempts = 0
         scanCount = 0
         contentScanCount = 0

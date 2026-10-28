@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.3.6 - 2026-10-28
+
+### 修复
+
+- 当 HyperOS/MIUI 的 `rootInActiveWindow` 与 `windows` 都为空时，改用无障碍事件 `event.source` 向上查找目标窗口根节点。
+- 备用 root 会参与开屏扫描，并按 `windowId` 与现有 root 去重。
+- 保留目标包名校验，不扫描事件源中的系统/其他应用节点。
+
+### 背景
+
+- 0.3.5 日志已确认输入法取消问题修复：`scans` 从 `0` 变为 `1`。
+- 但最新日志仍是 `roots=0 []`，说明 HyperOS 没有把目标窗口放进标准窗口列表；0.3.6 增加事件源兜底。
+
+### 验证
+
+- MEIZU 21：加入 root hint 后测试开屏仍成功，跳过计数 `41 → 42`。
+- `assembleDebug`、`assembleRelease`、`lintDebug` 通过。
+- Lint：`0 errors / 105 warnings / 0 unused resources`。
+
+### 限制
+
+- 没有 Redmi/HyperOS 真机，不能声明 window root hint 已在该设备验证。
+- 如果 0.3.6 仍显示 `roots=0`，说明事件源也拿不到目标节点，系统确实隔离了窗口树。
+
 ## v0.3.5 - 2026-10-28
 
 ### 修复

@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.lightskip.app.BuildConfig
@@ -173,7 +174,8 @@ class SkipAccessibilityService : AccessibilityService() {
                     isDemoSplash -> controller.onForeground(
                         packageName,
                         bypassTargetCheck = true,
-                        restartImmediately = foregroundChanged
+                        restartImmediately = foregroundChanged,
+                        rootHint = resolveRootHint(event.source, packageName)
                     )
                     isDemoPopup -> popupController.onWindowEvent(
                         packageName,
@@ -181,7 +183,11 @@ class SkipAccessibilityService : AccessibilityService() {
                         bypassTargetCheck = true
                     )
                     else -> {
-                        controller.onForeground(packageName, restartImmediately = foregroundChanged)
+                        controller.onForeground(
+                            packageName,
+                            restartImmediately = foregroundChanged,
+                            rootHint = resolveRootHint(event.source, packageName)
+                        )
                         popupController.onWindowEvent(packageName, lastForegroundActivityClass)
                     }
                 }
@@ -267,6 +273,24 @@ class SkipAccessibilityService : AccessibilityService() {
         return packageName == "com.android.systemui" ||
             packageName == "com.miui.systemui" ||
             inputMethodPackages.contains(packageName)
+    }
+
+    private fun resolveRootHint(
+        source: AccessibilityNodeInfo?,
+        targetPackage: String
+    ): AccessibilityNodeInfo? {
+        var best = source?.takeIf {
+            runCatching { it.packageName?.toString() }.getOrNull() == targetPackage
+        } ?: return null
+        var depth = 0
+        while (depth < MAX_ROOT_HINT_DEPTH) {
+            val parent = best?.parent ?: break
+            val parentPackage = runCatching { parent.packageName?.toString() }.getOrNull()
+            if (parentPackage != targetPackage) break
+            best = parent
+            depth++
+        }
+        return best
     }
 
     private fun recordDiagnostics(packageName: String, eventType: Int, className: String) {
@@ -407,6 +431,7 @@ class SkipAccessibilityService : AccessibilityService() {
         const val LEARNING_ARM_FALLBACK_MS = 3_000L
         const val LEARNING_FINISH_GRACE_MS = 1_500L
         const val DIAGNOSTICS_DETAIL_INTERVAL_MS = 300L
+        const val MAX_ROOT_HINT_DEPTH = 16
 
         val BASE_EVENT_TYPES = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
             AccessibilityEvent.TYPE_WINDOWS_CHANGED or
