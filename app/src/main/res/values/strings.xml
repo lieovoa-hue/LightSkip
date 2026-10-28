@@ -71,7 +71,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 扫描所有窗口</string>
-    <string name="version_line_02">轻跳 0.3 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.3.1 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>

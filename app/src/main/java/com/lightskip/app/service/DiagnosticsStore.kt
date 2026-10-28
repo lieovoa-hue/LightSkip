@@ -36,6 +36,9 @@ object DiagnosticsStore {
     @Volatile var lastScanPackage: String = ""
     @Volatile var lastScanNote: String = ""
     @Volatile var lastScanCandidate: PopupCandidate? = null
+    @Volatile var lastSplashScanPackage: String = ""
+    @Volatile var lastSplashScanNote: String = ""
+    @Volatile var lastSplashCandidate: PopupCandidate? = null
     @Volatile var lastClickPackage: String = ""
     @Volatile var lastClickResult: String = ""
     @Volatile var eventCount: Int = 0
@@ -94,6 +97,22 @@ object DiagnosticsStore {
             bounds = Rect(candidate.bounds),
             windowBounds = Rect(candidate.windowBounds)
         )
+    }
+
+    @Synchronized
+    fun recordSplashScan(packageName: String, note: String, candidate: PopupCandidate?) {
+        scanCount++
+        if (candidate != null) candidateCount++
+        val copy = candidate?.copy(
+            bounds = Rect(candidate.bounds),
+            windowBounds = Rect(candidate.windowBounds)
+        )
+        lastSplashScanPackage = packageName
+        lastSplashScanNote = note
+        lastSplashCandidate = copy
+        lastScanPackage = packageName
+        lastScanNote = note
+        lastScanCandidate = copy
     }
 
     @Synchronized
@@ -167,6 +186,8 @@ object DiagnosticsStore {
         builder.appendLine("last windows: $lastWindowPackages")
         builder.appendLine("last scan: $lastScanPackage / $lastScanNote")
         builder.appendLine("last candidate: ${formatCandidate(lastScanCandidate)}")
+        builder.appendLine("last splash scan: $lastSplashScanPackage / $lastSplashScanNote")
+        builder.appendLine("last splash candidate: ${formatCandidate(lastSplashCandidate)}")
         builder.appendLine("last click: $lastClickPackage / $lastClickResult")
         builder.appendLine("recent:")
         if (recent.isEmpty()) builder.appendLine("  (none)") else recent.forEach { builder.appendLine("  $it") }

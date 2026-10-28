@@ -4,7 +4,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.3 能力
+## v0.3.1 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行手动学习规则或导入的李跳跳规则。
@@ -14,6 +14,14 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 小米 / Redmi：增加 HyperOS/MIUI 事件与窗口兼容层。
 - 诊断与反馈：事件链路、扫描结果、点击结果、HarmonyOS/EMUI 信息和一键分享。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
+
+### v0.3.1 志愿汇修复
+
+- 开屏会话同包冷却从 2 秒降到 500ms，修复快速关闭再打开时根本不启动扫描。
+- 全屏广告容器没有文字节点时，只在广告容器内尝试左上/右上多点位，不再只固定右上角。
+- 兜底点击分时重试：约 1.2s、2.5s、4s、6s；广告容器消失后才结束并计数。
+- 诊断新增 `last splash scan` / `last splash candidate`。
+- 实测志愿汇：`skip_count 18 → 19`，诊断记录 `ACTION_CLICK 4S | 跳过`，随后进入 MainActivity。
 
 ## 规则导入
 
@@ -58,17 +66,17 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 ## 下载
 
-- v0.3 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3
-- Release APK：`dist/LightSkip-0.3.apk`
+- v0.3.1 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.1
+- Release APK：`dist/LightSkip-0.3.1.apk`
 - 带测试开屏、双 X 弹窗、延迟弹窗和规则测试入口的 Debug APK：
-  `dist/LightSkip-0.3-debug-with-demo.apk`
+  `dist/LightSkip-0.3.1-debug-with-demo.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`139,573` 字节，约 `136 KB`
-- Debug APK：`1,095,508` 字节，约 `1.04 MB`
+- Release APK：`140,645` 字节，约 `137 KB`
+- Debug APK：`1,023,247` 字节，约 `1.0 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -148,6 +156,7 @@ MEIZU 21 / Android 16 实测：
 - 连续两次开屏跳过成功；
 - AllRules 剪贴板导入成功；
 - 2 秒后出现的同一 Activity 弹窗自动关闭成功；
+- 志愿汇开屏连续重开测试成功：`skip_count 18 → 19`，识别到 `4S | 跳过`；
 - 空闲 CPU 采样 `0%`；
 - 后台 PSS 约 `44–57 MB`；
 - 会话结束后事件类型收缩回低频集合。
@@ -198,7 +207,7 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.3.apk`
+- `dist/LightSkip-0.3.1.apk`
 
 ## 已知限制
 

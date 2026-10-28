@@ -3,6 +3,7 @@ package com.lightskip.app.service
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
@@ -36,6 +37,9 @@ class SkipSessionController(
     private var scanLimit = 5
     private var contentScanLimit = 2
     private var lastScanAt = 0L
+    private var fallbackTaps = 0
+    private var lastFallbackTapAt = 0L
+    private var adContainerSeen = false
 
     private var lastEndedPackage: String? = null
     private var lastEndedAt = 0L
@@ -51,8 +55,8 @@ class SkipSessionController(
         if (active && targetPackage == packageName) return
 
         val now = SystemClock.uptimeMillis()
-        if (packageName == lastEndedPackage && now - lastEndedAt < 2_000L) {
-            DiagnosticsStore.recordScan(packageName, "session cooldown", null)
+        if (packageName == lastEndedPackage && now - lastEndedAt < 500L) {
+            DiagnosticsStore.recordSplashScan(packageName, "session cooldown", null)
             return
         }
         start(packageName, now)
@@ -74,7 +78,10 @@ class SkipSessionController(
         scanCount = 0
         contentScanCount = 0
         lastScanAt = 0L
-        scanLimit = if (prefs.compatibilityMode) 8 else 5
+        fallbackTaps = 0
+        lastFallbackTapAt = 0L
+        adContainerSeen = false
+        scanLimit = if (prefs.compatibilityMode) 9 else 5
         contentScanLimit = if (prefs.compatibilityMode) 3 else 2
         lastSignature = null
 
@@ -87,7 +94,8 @@ class SkipSessionController(
         handler.postDelayed(scanRunnable, 1_200L)
         handler.postDelayed(scanRunnable, 2_500L)
         if (prefs.compatibilityMode) {
-            handler.postDelayed(scanRunnable, 5_000L)
+            handler.postDelayed(scanRunnable, 4_000L)
+            handler.postDelayed(scanRunnable, 6_000L)
             handler.postDelayed(scanRunnable, 8_000L)
         }
     }
@@ -111,8 +119,9 @@ class SkipSessionController(
 
         val target = targetPackage ?: return
         val metrics = service.resources.displayMetrics
+        val roots = roots()
         val candidate = scanner.findSplash(
-            roots = roots(),
+            roots = roots,
             targetPackage = target,
             closeAdEnabled = prefs.closeAdEnabled,
             screenWidth = metrics.widthPixels,
@@ -120,11 +129,53 @@ class SkipSessionController(
         )
 
         if (candidate == null) {
-            DiagnosticsStore.recordScan(target, "no candidate", null)
+            val container = if (prefs.compatibilityMode) {
+                scanner.findSplashContainer(
+                    roots = roots,
+                    targetPackage = target,
+                    screenWidth = metrics.widthPixels,
+                    screenHeight = metrics.heightPixels
+                )
+            } else {
+                null
+            }
+            if (container != null) {
+                adContainerSeen = true
+                val elapsed = now - startedAt
+                if (elapsed >= FALLBACK_MIN_AGE_MS &&
+                    elapsed <= FALLBACK_WINDOW_MS &&
+                    fallbackTaps < FALLBACK_MAX_TAPS &&
+                    now - lastFallbackTapAt >= FALLBACK_MIN_TAP_GAP_MS
+                ) {
+                    val pointSpec = FALLBACK_POINTS[fallbackTaps % FALLBACK_POINTS.size]
+                    val point = PointF(
+                        metrics.widthPixels * pointSpec.first,
+                        metrics.heightPixels * pointSpec.second
+                    )
+                    if (tapAt(point, target, "splash position fallback")) {
+                        fallbackTaps++
+                        lastFallbackTapAt = now
+                        DiagnosticsStore.recordSplashScan(target, "ad container fallback", null)
+                        return
+                    }
+                }
+                DiagnosticsStore.recordSplashScan(target, "ad container waiting", null)
+                if (fallbackTaps >= FALLBACK_MAX_TAPS && elapsed > FALLBACK_WINDOW_MS) {
+                    finish()
+                }
+                return
+            }
+            if (adContainerSeen && fallbackTaps > 0) {
+                DiagnosticsStore.recordClick(target, true, "splash fallback closed")
+                onSkipped(target, now - startedAt)
+                finish()
+                return
+            }
+            DiagnosticsStore.recordSplashScan(target, "no candidate", null)
             return
         }
 
-        DiagnosticsStore.recordScan(target, "candidate", candidate.toDiagnostic(target))
+        DiagnosticsStore.recordSplashScan(target, "candidate", candidate.toDiagnostic(target))
         val bounds = candidate.bounds
         val signature = candidate.text + "|" + bounds.flattenToString()
         if (signature == lastSignature && now - lastSignatureAt < 450L) return
@@ -158,6 +209,16 @@ class SkipSessionController(
 
         DiagnosticsStore.recordClick(target, false, "click failed")
         if (attempts >= prefs.effectiveMaxAttempts) finish()
+    }
+
+    private fun tapAt(point: PointF, target: String, note: String): Boolean {
+        val path = Path().apply { moveTo(point.x, point.y) }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0L, 60L))
+            .build()
+        if (!service.dispatchGesture(gesture, null, null)) return false
+        DiagnosticsStore.recordClick(target, true, note)
+        return true
     }
 
     private fun roots(): List<AccessibilityNodeInfo> {
@@ -204,6 +265,9 @@ class SkipSessionController(
         scanCount = 0
         contentScanCount = 0
         lastScanAt = 0L
+        fallbackTaps = 0
+        lastFallbackTapAt = 0L
+        adContainerSeen = false
     }
 
     private fun NodeScanner.Candidate.toDiagnostic(pkg: String): DiagnosticsStore.PopupCandidate {
@@ -223,5 +287,15 @@ class SkipSessionController(
     private companion object {
         const val CONTENT_SCAN_DELAY_MS = 240L
         const val MIN_SCAN_INTERVAL_MS = 250L
+        const val FALLBACK_MIN_AGE_MS = 1_000L
+        const val FALLBACK_WINDOW_MS = 6_500L
+        const val FALLBACK_MAX_TAPS = 4
+        const val FALLBACK_MIN_TAP_GAP_MS = 1_000L
+        val FALLBACK_POINTS = listOf(
+            0.89f to 0.06f,
+            0.94f to 0.06f,
+            0.11f to 0.06f,
+            0.16f to 0.06f
+        )
     }
 }

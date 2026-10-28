@@ -177,6 +177,39 @@ class NodeScanner(private val rules: RuleEngine = RuleEngine) {
         return result
     }
 
+    fun findSplashContainer(
+        roots: List<AccessibilityNodeInfo>,
+        targetPackage: String,
+        screenWidth: Int,
+        screenHeight: Int
+    ): Rect? {
+        var found: Rect? = null
+        walk(roots, allowedPackages(targetPackage), screenWidth, screenHeight) { node, bounds, _ ->
+            val className = node.className?.toString().orEmpty()
+            val viewId = node.viewIdResourceName.orEmpty().lowercase()
+            val desc = node.contentDescription?.toString().orEmpty().lowercase()
+            val hint = viewId + " " + desc
+            val adContainer = hint.contains("advert") ||
+                hint.contains("splash") ||
+                hint.contains("ad_") ||
+                hint.contains("_ad")
+            val imageLike = className.contains("ImageView") ||
+                className.contains("WebView") ||
+                className.contains("SurfaceView") ||
+                className == "android.view.View"
+            if (adContainer &&
+                imageLike &&
+                bounds.width() >= screenWidth * 0.8f &&
+                bounds.height() >= screenHeight * 0.6f
+            ) {
+                found = Rect(bounds)
+                return@walk true
+            }
+            false
+        }
+        return found
+    }
+
     private fun walk(
         roots: List<AccessibilityNodeInfo>,
         scanPackages: Set<String>,
