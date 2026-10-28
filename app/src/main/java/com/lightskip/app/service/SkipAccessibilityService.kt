@@ -244,10 +244,18 @@ class SkipAccessibilityService : AccessibilityService() {
 
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 if (!learningClick) return
+                val source = event.source
+                val sourcePackage = source?.packageName?.toString()
+                val eventPackage = event.packageName?.toString()
+                if (!isAllowedLearningSource(sourcePackage) ||
+                    isTransientWindowPackage(eventPackage.orEmpty())
+                ) {
+                    return
+                }
                 recordDiagnostics(packageName, eventType, className)
                 popupController.onViewClicked(
                     packageName = prefs.learningTargetPackage,
-                    source = event.source,
+                    source = source,
                     activityClass = lastForegroundActivityClass,
                     windowBounds = currentWindowBounds()
                 )
@@ -300,6 +308,12 @@ class SkipAccessibilityService : AccessibilityService() {
             depth++
         }
         return best
+    }
+
+    private fun isAllowedLearningSource(packageName: String?): Boolean {
+        if (packageName == null) return true
+        return packageName == prefs.learningTargetPackage ||
+            NodeScanner.SYSTEM_AD_PACKAGES.contains(packageName)
     }
 
     private fun recordDiagnostics(packageName: String, eventType: Int, className: String) {

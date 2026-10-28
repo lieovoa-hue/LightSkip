@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.9 - 2026-10-28
+
+### 修复
+
+- 关闭“应用内弹窗”后，已启动的弹窗会话立即结束，不再在模式关闭后继续点击。
+- 已学习规则会过滤 `menu/more/action/detail/banner/video/search/tab` 等明显非关闭 ID。
+- 学习模式拒绝输入法、System UI 等非目标来源，避免键盘 X 被记录为关闭按钮。
+- 学习控件仍要求小型关闭目标，不改变手动学习多按钮的流程。
+
+### 验证
+
+- MEIZU 21：系统无障碍页停留后计数 `11 → 11`，没有误点。
+- MEIZU 21：测试开屏计数 `11 → 12`。
+- `assembleDebug`、`assembleRelease`、`lintDebug` 通过。
+- Lint：`0 errors / 105 warnings / 0 unused resources`。
+
+### 说明
+
+- 日志中的 `popup learned id=image_middle_menu_image` 已被规则过滤，不会再执行。
+- Redmi/HyperOS 的窗口树隔离问题仍需 0.3.9 真机日志确认。
+
 ## v0.3.8 - 2026-10-28
 
 ### 修复

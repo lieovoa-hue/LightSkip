@@ -81,7 +81,7 @@ class RuleLearningStore(context: Context) {
         val raw = sp.getString(key(packageName), null) ?: return emptyList()
         return runCatching {
             if (raw.trimStart().startsWith("[")) decodeArray(JSONArray(raw)) else listOf(decodeObject(JSONObject(raw)))
-        }.getOrDefault(emptyList())
+        }.getOrDefault(emptyList()).filterNot { isUnsafeRule(it) }
     }
 
     fun canLearn(
@@ -193,6 +193,9 @@ class RuleLearningStore(context: Context) {
             textHint.startsWith("跳过") ||
             textHint.startsWith("关闭") ||
             textHint in setOf("×", "x", "关闭", "关闭广告", "跳过", "skip", "close", "取消")
+        if (!explicitHint && NON_CLOSE_ID_HINTS.any { idHint.contains(it) }) {
+            return false
+        }
         if (explicitHint) {
             return relW <= 0.80f && relH <= 0.15f && relW * relH <= 0.10f
         }
@@ -203,7 +206,20 @@ class RuleLearningStore(context: Context) {
 
     private fun key(packageName: String): String = "rule_$packageName"
 
+    private fun isUnsafeRule(rule: LearnedRule): Boolean {
+        if (rule.regionOnly || rule.viewId.isBlank()) return false
+        val id = rule.viewId.lowercase()
+        val explicit = CLOSE_ID_HINTS.any { id.contains(it) }
+        return !explicit && NON_CLOSE_ID_HINTS.any { id.contains(it) }
+    }
+
     companion object {
         const val MAX_RULES = 5
+
+        private val CLOSE_ID_HINTS = listOf("close", "dismiss", "skip")
+        private val NON_CLOSE_ID_HINTS = listOf(
+            "menu", "more", "action", "detail", "banner", "video",
+            "search", "tab", "avatar", "profile", "toolbar"
+        )
     }
 }

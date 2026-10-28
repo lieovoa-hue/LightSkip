@@ -93,6 +93,10 @@ class PopupSessionController(
 
     fun onContentChanged(packageName: String, activityClass: String = "") {
         if (active) {
+            if (!prefs.masterEnabled || prefs.learningMode || prefs.popupMode != PopupMode.LEARNED) {
+                finish()
+                return
+            }
             if (packageName != targetPackage) return
             targetActivityClass = activityClass
             handler.removeCallbacks(contentScanRunnable)
@@ -300,6 +304,10 @@ class PopupSessionController(
 
     private fun scan(contentTriggered: Boolean = false) {
         if (!active) return
+        if (!prefs.masterEnabled || prefs.learningMode || prefs.popupMode != PopupMode.LEARNED) {
+            finish()
+            return
+        }
         val now = SystemClock.uptimeMillis()
         if (now > deadline || attempts >= MAX_ATTEMPTS) {
             finish()
