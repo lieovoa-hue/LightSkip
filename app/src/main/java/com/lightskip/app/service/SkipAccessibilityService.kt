@@ -153,7 +153,11 @@ class SkipAccessibilityService : AccessibilityService() {
             val previous = lastForegroundPackage
             lastForegroundPackage = packageName
             if (watched) {
-                controller.onForeground(packageName, restartImmediately = true)
+                controller.onForeground(
+                    packageName,
+                    restartImmediately = true,
+                    activityClass = lastForegroundActivityClass
+                )
             } else if (previous != null) {
                 controller.cancel()
                 popupController.cancel()
@@ -190,7 +194,8 @@ class SkipAccessibilityService : AccessibilityService() {
                         packageName,
                         bypassTargetCheck = true,
                         restartImmediately = foregroundChanged,
-                        rootHint = rootHint
+                        rootHint = rootHint,
+                        activityClass = className
                     )
                     isDemoPopup -> popupController.onWindowEvent(
                         packageName,
@@ -202,7 +207,8 @@ class SkipAccessibilityService : AccessibilityService() {
                         controller.onForeground(
                             packageName,
                             restartImmediately = foregroundChanged,
-                            rootHint = rootHint
+                            rootHint = rootHint,
+                            activityClass = className
                         )
                         popupController.onWindowEvent(
                             packageName,
@@ -227,7 +233,8 @@ class SkipAccessibilityService : AccessibilityService() {
                         lastWindowSessionAt = now
                         controller.onForeground(
                             packageName,
-                            rootHint = resolveRootHint(event.source, packageName)
+                            rootHint = resolveRootHint(event.source, packageName),
+                            activityClass = lastForegroundActivityClass
                         )
                     }
                 }

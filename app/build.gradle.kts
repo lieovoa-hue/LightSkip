@@ -11,8 +11,8 @@ android {
         applicationId = "com.lightskip.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.4.0"
+        versionCode = 17
+        versionName = "0.4.1"
     }
 
     buildTypes {
@@ -39,4 +39,8 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }

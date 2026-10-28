@@ -4,7 +4,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.4.0 能力
+## v0.4.1 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行录制坐标规则或导入的李跳跳规则。
@@ -17,6 +17,14 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 后台状态：区分 Android 电池白名单、厂商后台限制、AppOps 和待机分组，避免误报“受限”。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
 - 轻量低功耗：空闲只订阅状态和窗口事件；完整窗口与内容事件仅在短会话时开启。
+
+### v0.4.1 驾考宝典开屏修复
+
+- 支持 `rel:x,y` 相对坐标，按实际屏幕比例换算，不再绑定单一分辨率。
+- 可读的“跳过/关闭广告”文字优先，坐标规则只做无障碍节点不可见时的兜底。
+- 坐标规则支持 `times` 次数限制；补点仅在目标仍处于 `SplashActivity` 时执行。
+- 驾考宝典当前开屏规则：`startUpView` → `rel:0.091,0.724`，覆盖左下角圆形“跳过”。
+- 安装升级时自动移除旧的固定坐标 `590,140,660,215`。
 
 ### v0.4.0 规则管理
 
@@ -157,20 +165,22 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - `&`：同一节点内同时包含多个片段
 - `|`：任一分支匹配
 - `=`：精确匹配
+- `rel:x,y`：屏幕相对坐标，例如 `rel:0.091,0.724`
+- `rel:left,top,right,bottom`：屏幕相对区域，点击区域中心
 - `times` / `delay_popup`：保存但不作为弹窗主要逻辑；弹窗场景默认点击一次
 
 `.json` 中少量规则带尾逗号，轻跳会做宽松解析，避免整条丢弃。
 
 ## 下载
 
-- v0.4.0 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.4.0
-- Release APK：`dist/LightSkip-0.4.0.apk`
+- v0.4.1 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.4.1
+- Release APK：`dist/LightSkip-0.4.1.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`163,314` 字节，约 `160 KB`
+- Release APK：`165,534` 字节，约 `162 KB`
 - Debug 构建：约 `1.01 MB`（仅用于开发测试，不随 Release 分发）
 - 无 `uses-permission`
 - 无 `INTERNET`
@@ -252,7 +262,7 @@ adb logcat -d | findstr /i "lightskip Accessibility"
 - 有规则的 App 前台时，内容事件用于延迟弹窗检测。
 - 弹窗内容探针最多每 2 秒一次，每次最多 2 次扫描。
 - 空闲无障碍标志仅保留 `flagReportViewIds`，不读取非重要视图和 WebView 增强节点。
-- 开屏兼容模式扫描计划最多 8 次、点击尝试最多 5 次；只扫描目标 App 与 MIUI 系统广告窗口。
+- 开屏兼容模式扫描上限 16 次、点击尝试最多 5 次；只扫描目标 App 与 MIUI 系统广告窗口。
 - 节点上限 400、深度 14。
 - 诊断窗口详情按 300ms 采样，避免同一次启动重复读取窗口树。
 - 无轮询、无 WakeLock、无开机广播、无前台常驻服务。
@@ -277,13 +287,15 @@ MEIZU 21 / Android 16 实测：
 - 系统无障碍页不再误点“轻跳 · 开屏跳过”，跳过计数保持 `43 → 43`；测试开屏 `43 → 44`；
 - 志愿汇开屏不再点击“查看详情/跳转第三方”，实际进入 MainActivity，计数 `58 → 59`；
 - 关闭弹窗模式后旧会话立即结束；系统无障碍页计数 `11 → 11`，测试开屏 `11 → 12`；
+- 驾考宝典同一优惠券开屏连续启动 `4/4` 进入主页；
+- 驾考广告加载时轻跳进程 CPU 约 `0%`，广告 App 主进程约 `77.7%`；
 - 空闲 CPU 采样 `0%`；
-- Release 服务空闲 PSS 约 `25 MB`（`25,600 KB`）；
+- Release 服务空闲 PSS `5,629 KB`（约 `5.5 MB`）；
 - 会话结束后事件类型收缩回低频集合。
 
 ## 安装与使用
 
-1. 安装 `dist/LightSkip-0.4.0.apk`。
+1. 安装 `dist/LightSkip-0.4.1.apk`。
 2. 打开轻跳，进入系统无障碍设置开启服务。
 3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
 4. 在应用页选择要跳过的 App。
@@ -303,12 +315,13 @@ app/src/main/java/com/lightskip/app/
 │   ├── Prefs.kt
 │   ├── PopupMode.kt
 │   ├── RuleLearningStore.kt
-│   ├── ImportedRuleStore.kt        李跳跳规则兼容
-│   └── LocalStats.kt
+│   └── ImportedRuleStore.kt        李跳跳规则兼容
 ├── service/
 │   ├── SkipAccessibilityService.kt 事件入口 / OEM 兼容 / 学习状态机
 │   ├── SkipSessionController.kt    开屏会话
 │   ├── PopupSessionController.kt   学习/导入规则执行
+│   ├── SplashActionResolver.kt     绝对/相对开屏坐标解析
+│   ├── RegionRecorder.kt           关闭按钮区域录制
 │   ├── NodeScanner.kt              有界节点遍历
 │   ├── RuleEngine.kt               开屏规则
 │   └── DiagnosticsStore.kt         诊断与分享报告
@@ -327,10 +340,10 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.4.0.apk`
+- `dist/LightSkip-0.4.1.apk`
 
-验证结果：`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
-`0 errors / 105 warnings / 0 unused resources`。
+验证结果：`testDebugUnitTest`、`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
+`0 errors / 106 warnings / 0 unused resources`。
 
 ## 已知限制
 

@@ -1,4 +1,4 @@
 [
   {"847156324":"{\"popup_rules\":[{\"id\":\"main_splash_ad\",\"action\":\"955,295,1025,365\",\"delay_popup\":1500}]}"},
-  {"595611582":"{\"popup_rules\":[{\"id\":\"startUpView\",\"action\":\"590,140,660,215\",\"delay_popup\":2000}]}"}
+  {"595611582":"{\"popup_rules\":[{\"id\":\"startUpView\",\"action\":\"rel:0.091,0.724\",\"delay_popup\":4500,\"times\":3}]}"}
 ]

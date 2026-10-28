@@ -30,6 +30,7 @@ class SkipSessionController(
     val targetPackageName: String? get() = targetPackage
 
     private var targetPackage: String? = null
+    private var targetActivityClass: String = ""
     private var startedAt = 0L
     private var deadline = 0L
     private var attempts = 0
@@ -42,6 +43,10 @@ class SkipSessionController(
     private var lastFallbackTapAt = 0L
     private var lastRuleTapAt = 0L
     private var adContainerSeen = false
+    private val ruleTapCounts = mutableMapOf<String, Int>()
+    private var pendingRulePoint: PointF? = null
+    private var pendingRuleKey: String? = null
+    private var pendingRuleMaxTaps = 0
 
     private var lastEndedPackage: String? = null
     private var lastEndedAt = 0L
@@ -54,13 +59,15 @@ class SkipSessionController(
         packageName: String,
         bypassTargetCheck: Boolean = false,
         restartImmediately: Boolean = false,
-        rootHint: AccessibilityNodeInfo? = null
+        rootHint: AccessibilityNodeInfo? = null,
+        activityClass: String = ""
     ) {
         if (!prefs.masterEnabled || (!bypassTargetCheck && !prefs.isTarget(packageName))) {
             cancel()
             return
         }
         if (active && targetPackage == packageName) {
+            updateActivityClass(activityClass)
             if (this.rootHint == null) this.rootHint = rootHint
             return
         }
@@ -70,7 +77,7 @@ class SkipSessionController(
             DiagnosticsStore.recordSplashScan(packageName, "session cooldown", null)
             return
         }
-        start(packageName, now, rootHint)
+        start(packageName, now, rootHint, activityClass)
     }
 
     fun onContentChanged(packageName: String) {
@@ -79,10 +86,16 @@ class SkipSessionController(
         handler.postDelayed(contentScanRunnable, CONTENT_SCAN_DELAY_MS)
     }
 
-    private fun start(packageName: String, now: Long, rootHint: AccessibilityNodeInfo?) {
+    private fun start(
+        packageName: String,
+        now: Long,
+        rootHint: AccessibilityNodeInfo?,
+        activityClass: String
+    ) {
         reset()
         active = true
         targetPackage = packageName
+        targetActivityClass = activityClass
         this.rootHint = rootHint
         startedAt = now
         deadline = now + prefs.effectiveWindowMs
@@ -94,7 +107,8 @@ class SkipSessionController(
         lastFallbackTapAt = 0L
         lastRuleTapAt = 0L
         adContainerSeen = false
-        scanLimit = if (prefs.compatibilityMode) 12 else 8
+        ruleTapCounts.clear()
+        scanLimit = if (prefs.compatibilityMode) 16 else 10
         contentScanLimit = if (prefs.compatibilityMode) 3 else 2
         lastSignature = null
 
@@ -108,9 +122,11 @@ class SkipSessionController(
         handler.postDelayed(scanRunnable, 600L)
         handler.postDelayed(scanRunnable, 1_200L)
         handler.postDelayed(scanRunnable, 2_500L)
+        handler.postDelayed(scanRunnable, 5_000L)
+        handler.postDelayed(scanRunnable, 5_800L)
         if (prefs.compatibilityMode) {
             handler.postDelayed(scanRunnable, 4_000L)
-            handler.postDelayed(scanRunnable, 6_000L)
+            handler.postDelayed(scanRunnable, 6_400L)
             handler.postDelayed(scanRunnable, 8_000L)
         }
     }
@@ -141,17 +157,18 @@ class SkipSessionController(
         if (contentTriggered) contentScanCount++
 
         val target = targetPackage ?: return
+        if (retryPendingRuleTap(target, now)) return
         val metrics = service.resources.displayMetrics
         val roots = roots()
         val rootPackages = roots.mapNotNull { it.packageName?.toString() }.distinct()
         val rootNote = "roots=${roots.size} [" + rootPackages.joinToString(",") + "]"
-        if (evaluateSplashRules(target, roots, now)) return
         val candidate = scanner.findSplash(
             roots = roots,
             targetPackage = target,
             screenWidth = metrics.widthPixels,
             screenHeight = metrics.heightPixels
         )
+        if (candidate == null && evaluateSplashRules(target, roots, now)) return
 
         if (candidate == null) {
             val container = if (prefs.compatibilityMode) {
@@ -270,22 +287,33 @@ class SkipSessionController(
         for (rule in rules) {
             if (now - startedAt < rule.delayMs) continue
             if (now - lastRuleTapAt < RULE_RETRY_GAP_MS) continue
+            val ruleKey = rule.id + '\u0000' + rule.action
+            val used = ruleTapCounts[ruleKey] ?: 0
+            if (used >= rule.times) continue
             val trigger = nodes.firstOrNull { matchesIdentifier(it, rule.id) } ?: continue
             if (rule.id.equals("main_splash_ad", ignoreCase = true) &&
                 trigger.node.childCount == 0
             ) {
                 continue
             }
-            val actionBounds = parseBounds(rule.action)
-            if (actionBounds != null) {
+            val actionPoint = SplashActionResolver.resolve(
+                rule.action,
+                metrics.widthPixels,
+                metrics.heightPixels
+            )
+            if (actionPoint != null) {
                 attempts++
                 DiagnosticsStore.recordScan(target, "splash rule: " + rule.id.take(24), trigger.toDiagnostic(target))
+                val note = "splash rule " + rule.id.take(16) +
+                    " @(" + actionPoint.x.toInt() + "," + actionPoint.y.toInt() + ")" +
+                    " t=" + (now - startedAt) + "ms"
                 if (tapAt(
-                        PointF(actionBounds.exactCenterX(), actionBounds.exactCenterY()),
+                        PointF(actionPoint.x, actionPoint.y),
                         target,
-                        "splash rule bounds"
+                        note
                     )
                 ) {
+                    rememberRuleTap(ruleKey, rule.times, PointF(actionPoint.x, actionPoint.y), used + 1)
                     lastRuleTapAt = now
                     return true
                 }
@@ -302,11 +330,65 @@ class SkipSessionController(
                     "splash rule node"
                 )
             ) {
+                rememberRuleTap(
+                    ruleKey,
+                    rule.times,
+                    PointF(action.bounds.exactCenterX(), action.bounds.exactCenterY()),
+                    used + 1
+                )
                 lastRuleTapAt = now
                 return true
             }
         }
         return false
+    }
+
+    private fun retryPendingRuleTap(target: String, now: Long): Boolean {
+        val point = pendingRulePoint ?: return false
+        val key = pendingRuleKey ?: return false
+        if (!targetActivityClass.contains("splash", ignoreCase = true)) {
+            clearPendingRuleTap()
+            return false
+        }
+        if (now - lastRuleTapAt < RULE_RETRY_GAP_MS) return false
+        val used = ruleTapCounts[key] ?: 0
+        if (used >= pendingRuleMaxTaps) {
+            clearPendingRuleTap()
+            return false
+        }
+        if (!tapAt(
+                point,
+                target,
+                "splash rule retry @(" + point.x.toInt() + "," + point.y.toInt() + ")" +
+                    " t=" + (now - startedAt) + "ms"
+            )
+        ) {
+            return false
+        }
+        ruleTapCounts[key] = used + 1
+        lastRuleTapAt = now
+        return true
+    }
+
+    private fun rememberRuleTap(key: String, maxTaps: Int, point: PointF, tapCount: Int) {
+        ruleTapCounts[key] = tapCount
+        pendingRuleKey = key
+        pendingRuleMaxTaps = maxTaps
+        pendingRulePoint = point
+    }
+
+    private fun updateActivityClass(activityClass: String) {
+        if (activityClass.isBlank()) return
+        targetActivityClass = activityClass
+        if (!activityClass.contains("splash", ignoreCase = true)) {
+            clearPendingRuleTap()
+        }
+    }
+
+    private fun clearPendingRuleTap() {
+        pendingRulePoint = null
+        pendingRuleKey = null
+        pendingRuleMaxTaps = 0
     }
 
     private fun matchesIdentifier(node: NodeScanner.NodeView, raw: String): Boolean {
@@ -383,7 +465,10 @@ class SkipSessionController(
         lastEndedPackage = targetPackage
         lastEndedAt = SystemClock.uptimeMillis()
         targetPackage = null
+        targetActivityClass = ""
         rootHint = null
+        ruleTapCounts.clear()
+        clearPendingRuleTap()
         handler.removeCallbacksAndMessages(null)
         onActiveChanged()
     }
@@ -396,6 +481,7 @@ class SkipSessionController(
         handler.removeCallbacksAndMessages(null)
         active = false
         targetPackage = null
+        targetActivityClass = ""
         rootHint = null
         attempts = 0
         scanCount = 0
@@ -404,6 +490,8 @@ class SkipSessionController(
         fallbackTaps = 0
         lastFallbackTapAt = 0L
         adContainerSeen = false
+        ruleTapCounts.clear()
+        clearPendingRuleTap()
     }
 
     private fun NodeScanner.Candidate.toDiagnostic(pkg: String): DiagnosticsStore.PopupCandidate {
@@ -428,7 +516,7 @@ class SkipSessionController(
         const val FALLBACK_WINDOW_MS = 6_500L
         const val FALLBACK_MAX_TAPS = 4
         const val FALLBACK_MIN_TAP_GAP_MS = 1_000L
-        const val RULE_RETRY_GAP_MS = 1_200L
+        const val RULE_RETRY_GAP_MS = 600L
         val FALLBACK_POINTS = listOf(
             0.89f to 0.06f,
             0.94f to 0.06f,

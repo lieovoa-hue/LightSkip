@@ -179,8 +179,17 @@ class MainActivity : Activity() {
     }
 
     private fun seedSplashRulesIfNeeded() {
-        if (prefs.splashRulesVersion >= SPLASH_RULES_VERSION) return
+        val previousVersion = prefs.splashRulesVersion
+        if (previousVersion >= SPLASH_RULES_VERSION) return
         prefs.splashRulesVersion = SPLASH_RULES_VERSION
+        if (previousVersion < 2) {
+            val packageName = "cn.mucang.android.smart"
+            val rules = splashRules.getRules(packageName)
+            val kept = rules.filterNot {
+                it.id == "startUpView" && it.action == "590,140,660,215"
+            }
+            if (kept.size != rules.size) splashRules.setRules(packageName, kept)
+        }
         val installed = repo.load().map { it.packageName }.toSet()
         runCatching { splashRules.importBuiltinRules(this, installed) }
     }
@@ -575,6 +584,6 @@ class MainActivity : Activity() {
 
     private companion object {
         const val BUILTIN_RULES_VERSION = 6
-        const val SPLASH_RULES_VERSION = 1
+        const val SPLASH_RULES_VERSION = 4
     }
 }

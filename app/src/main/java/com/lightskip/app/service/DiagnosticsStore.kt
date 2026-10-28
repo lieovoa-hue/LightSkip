@@ -139,6 +139,11 @@ object DiagnosticsStore {
         builder.appendLine("android: ${Build.VERSION.RELEASE} (${Build.VERSION.SDK_INT})")
         builder.appendLine("device: ${Build.MANUFACTURER} ${Build.BRAND} ${Build.MODEL} / ${Build.DEVICE}")
         builder.appendLine("hardware: ${Build.HARDWARE} / ${Build.DISPLAY}")
+        val metrics = context.resources.displayMetrics
+        builder.appendLine(
+            "display: ${metrics.widthPixels}x${metrics.heightPixels} " +
+                "density=${"%.2f".format(Locale.US, metrics.density)}"
+        )
         builder.appendLine("harmony: ${harmonyLabel()}")
         builder.appendLine(
             "harmony props: emui=${systemProperty("ro.build.version.emui")} " +
