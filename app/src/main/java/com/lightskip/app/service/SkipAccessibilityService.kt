@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.lightskip.app.BuildConfig
 import com.lightskip.app.R
@@ -34,6 +35,7 @@ class SkipAccessibilityService : AccessibilityService() {
         Build.BRAND.equals("Redmi", true) ||
         Build.BRAND.equals("POCO", true)
     private var lastDiagnosticsDetailAt = 0L
+    private var inputMethodPackages: Set<String> = emptySet()
     private val learningHandler = Handler(Looper.getMainLooper())
     private var learningArmPackage: String? = null
     private val learningArmRunnable = Runnable {
@@ -57,6 +59,12 @@ class SkipAccessibilityService : AccessibilityService() {
         stats.prune()
         learningStore = RuleLearningStore(this)
         importedStore = ImportedRuleStore(this)
+        inputMethodPackages = runCatching {
+            getSystemService(InputMethodManager::class.java)
+                .enabledInputMethodList
+                .mapNotNull { it.packageName }
+                .toSet()
+        }.getOrDefault(emptySet())
         val scanner = NodeScanner()
 
         controller = SkipSessionController(
@@ -87,6 +95,20 @@ class SkipAccessibilityService : AccessibilityService() {
         DiagnosticsStore.noteAccessibilityEvent()
         val eventType = event.eventType
         val packageName = resolveEventPackage(event) ?: return
+        if (isTransientWindowPackage(packageName) && !prefs.isTarget(packageName)) {
+            val target = controller.targetPackageName
+                ?: popupController.targetPackageName
+                ?: lastForegroundPackage?.takeIf { prefs.isTarget(it) }
+            if (target != null) {
+                if (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+                    controller.onContentChanged(target)
+                    if (popupController.isRunning) {
+                        popupController.onContentChanged(target, lastForegroundActivityClass)
+                    }
+                }
+                return
+            }
+        }
         val foregroundChanged = lastForegroundPackage != packageName
         val className = event.className?.toString().orEmpty()
         val isOwnApp = packageName == this.packageName
@@ -239,6 +261,12 @@ class SkipAccessibilityService : AccessibilityService() {
             return rootPackage
         }
         return eventPackage ?: rootPackage ?: lastForegroundPackage
+    }
+
+    private fun isTransientWindowPackage(packageName: String): Boolean {
+        return packageName == "com.android.systemui" ||
+            packageName == "com.miui.systemui" ||
+            inputMethodPackages.contains(packageName)
     }
 
     private fun recordDiagnostics(packageName: String, eventType: Int, className: String) {

@@ -165,6 +165,7 @@ object RuleEngine {
         if (text.isEmpty() || text.length > 10) return false
         if (rejectedFragments.any { text.contains(it) }) return false
         if (text in setOf("关闭广告", "关闭", "×", "x")) return true
+        if (text.length <= 8 && (text.contains("跳过") || text.contains("关闭广告"))) return true
         return skipPatterns.any { it.matches(text) }
     }
 }
