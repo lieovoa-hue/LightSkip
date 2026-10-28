@@ -1,0 +1,16 @@
+[
+  {"-973170826":"{\"popup_rules\":[{\"id\":\"hq\",\"action\":\"hq\"},{\"id\":\"jph\",\"action\":\"jph\"},{\"id\":\"不感兴趣原因\",\"action\":\"关闭\"},{\"id\":\"jpa\",\"action\":\"jpa\"},{\"id\":\"container\",\"action\":\"feedbackIcon\"},{\"id\":\"+与我无关\",\"action\":\"与我无关\"},{\"id\":\"+登录&-微信\",\"action\":\"=登录\"}]}"},
+  {"361910168":"{\"popup_rules\":[{\"id\":\"ik1\",\"action\":\"ik1\"},{\"id\":\"关闭此条广告\",\"action\":\"关闭此条广告\"},{\"id\":\"发现QQ版本更新\",\"action\":\"iyx\"},{\"id\":\"广告×\",\"action\":\"广告×\"},{\"id\":\"+登录&-QQ\",\"action\":\"=登录\"}]}"},
+  {"1994036591":"{\"popup_rules\":[{\"id\":\"屏蔽推广\",\"action\":\"reason1_layout\"},{\"id\":\"屏蔽广告\",\"action\":\"reason1_layout\"}]}"},
+  {"847156324":"{\"popup_rules\":[{\"id\":\"关闭广告\",\"action\":\"不感兴趣\"},{\"id\":\"举报广告\",\"action\":\"不感兴趣\"}]}"},
+  {"-1031558479":"{\"popup_rules\":[{\"id\":\"升级完整版\",\"action\":\"ace\"}]}"},
+  {"386107370":"{\"popup_rules\":[{\"id\":\"版本更新\",\"action\":\"取消\"}]}"},
+  {"1073158053":"{\"popup_rules\":[{\"id\":\"draw_dialog_tv_submit\",\"action\":\"GLOBAL_ACTION_BACK\"}]}"},
+  {"-1050713937":"{\"popup_rules\":[{\"id\":\"发现新版本\",\"action\":\"以后再说\"}]}"},
+  {"762493631":"{\"popup_rules\":[{\"id\":\"+发现新版本\",\"action\":\"残忍拒绝\"}]}"},
+  {"-1898417322":"{\"popup_rules\":[{\"id\":\"广告\",\"action\":\"closeGray\"}]}"},
+  {"-1565570240":"{\"popup_rules\":[{\"id\":\"exit_btn_exit\",\"action\":\"exit_btn_exit\"}]}"},
+  {"-189732215":"{\"popup_rules\":[{\"id\":\"image_close_banner\",\"action\":\"image_close_banner\"}]}"},
+  {"-905066364":"{\"popup_rules\":[{\"id\":\"是否升级\",\"action\":\"下次\"}]}"},
+  {"740556751":"{\"popup_rules\":[{\"id\":\"新版\",\"action\":\"update_close\"},{\"id\":\"开启悬浮窗\",\"action\":\"siv_close\"},{\"id\":\"rl_itr_content\",\"action\":\"iv_itr_close\"}]}"}
+]

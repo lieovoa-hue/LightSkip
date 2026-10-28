@@ -5,7 +5,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 
-class ImportedRuleStore(context: Context) {
+class ImportedRuleStore(
+    context: Context,
+    prefsName: String = "lightskip_imported_rules",
+    private val builtinAsset: String = "builtin_rules.json"
+) {
 
     data class PopupRule(
         val id: String,
@@ -22,62 +26,16 @@ class ImportedRuleStore(context: Context) {
     )
 
     private val sp = context.applicationContext.getSharedPreferences(
-        "lightskip_imported_rules",
+        prefsName,
         Context.MODE_PRIVATE
     )
 
     fun importAllRules(raw: String, installedPackages: Set<String>): ImportResult {
         val root = parseJson(raw)
-        val entries = linkedMapOf<Int, Any>()
-        when (root) {
-            is JSONArray -> {
-                for (index in 0 until root.length()) {
-                    val item = root.optJSONObject(index) ?: continue
-                    val keys = item.keys()
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        val hash = key.toIntOrNull() ?: continue
-                        entries[hash] = item.opt(key) ?: continue
-                    }
-                }
-            }
-            is JSONObject -> {
-                if (root.has("popup_rules")) {
-                    throw IllegalArgumentException("single_app_rules")
-                }
-                val keys = root.keys()
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    val hash = key.toIntOrNull() ?: continue
-                    entries[hash] = root.opt(key) ?: continue
-                }
-            }
-            else -> throw IllegalArgumentException("invalid_rules")
+        if (root is JSONObject && root.has("popup_rules")) {
+            throw IllegalArgumentException("single_app_rules")
         }
-        if (entries.isEmpty()) throw IllegalArgumentException("invalid_rules")
-
-        val packagesByHash = installedPackages.associateBy { packageHash(it) }
-        val editor = sp.edit()
-        var matchedApps = 0
-        var ruleCount = 0
-        var unmatchedHashes = 0
-        val packages = mutableSetOf<String>()
-
-        for ((hash, value) in entries) {
-            val packageName = packagesByHash[hash]
-            if (packageName == null) {
-                unmatchedHashes++
-                continue
-            }
-            val rules = parseRuleValue(value)
-            if (rules.isEmpty()) continue
-            editor.putString(key(packageName), encode(rules).toString())
-            matchedApps++
-            ruleCount += rules.size
-            packages.add(packageName)
-        }
-        editor.apply()
-        return ImportResult(matchedApps, ruleCount, unmatchedHashes, packages)
+        return mergeRules(raw, installedPackages)
     }
 
     fun importForPackage(packageName: String, raw: String): Int {
@@ -99,16 +57,71 @@ class ImportedRuleStore(context: Context) {
         return rules.size
     }
 
+    fun importBuiltinRules(
+        context: Context,
+        installedPackages: Set<String>
+    ): ImportResult? {
+        val raw = runCatching {
+            context.assets.open(builtinAsset).bufferedReader().use { it.readText() }
+        }.getOrNull() ?: return null
+        return mergeRules(raw, installedPackages)
+    }
+
     fun getRules(packageName: String): List<PopupRule> {
         val raw = sp.getString(key(packageName), null) ?: return emptyList()
         return runCatching { parseRuleArray(JSONArray(raw)) }.getOrDefault(emptyList())
     }
 
+    fun setRules(packageName: String, rules: List<PopupRule>) {
+        if (rules.isEmpty()) {
+            sp.edit().remove(key(packageName)).apply()
+        } else {
+            sp.edit().putString(key(packageName), encode(rules).toString()).apply()
+        }
+    }
+
     fun hasRules(packageName: String): Boolean =
         !sp.getString(key(packageName), null).isNullOrBlank()
 
+    fun ruleCount(packageName: String): Int {
+        val raw = sp.getString(key(packageName), null) ?: return 0
+        return runCatching { JSONArray(raw).length() }.getOrDefault(0)
+    }
+
+    fun clearAllRules(): Int {
+        val keys = sp.all.keys.filter { it.startsWith(KEY_PREFIX) }
+        if (keys.isEmpty()) return 0
+        val editor = sp.edit()
+        keys.forEach { editor.remove(it) }
+        editor.apply()
+        return keys.size
+    }
+
     fun importedAppCount(): Int = sp.all.keys.count { key ->
         key.startsWith(KEY_PREFIX) && !sp.getString(key, null).isNullOrBlank()
+    }
+
+    fun exportAllRules(): String {
+        val array = JSONArray()
+        sp.all.keys
+            .filter { it.startsWith(KEY_PREFIX) }
+            .sorted()
+            .forEach { storedKey ->
+                val packageName = storedKey.removePrefix(KEY_PREFIX)
+                val rules = getRules(packageName)
+                if (rules.isEmpty()) return@forEach
+                val value = JSONObject()
+                    .put("popup_rules", encode(rules))
+                    .toString()
+                array.put(JSONObject().put(packageHash(packageName).toString(), value))
+            }
+        return array.toString()
+    }
+
+    fun exportPackageRules(packageName: String): String {
+        return JSONObject()
+            .put("popup_rules", encode(getRules(packageName)))
+            .toString()
     }
 
     private fun parseRuleValue(value: Any): List<PopupRule> {
@@ -121,14 +134,94 @@ class ImportedRuleStore(context: Context) {
         }
     }
 
+    private fun mergeRules(raw: String, installedPackages: Set<String>): ImportResult {
+        val root = parseJson(raw)
+        val entries = linkedMapOf<Int, Any>()
+        when (root) {
+            is JSONArray -> {
+                for (index in 0 until root.length()) {
+                    val item = root.optJSONObject(index) ?: continue
+                    val keys = item.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        val hash = key.toIntOrNull() ?: continue
+                        entries[hash] = item.opt(key) ?: continue
+                    }
+                }
+            }
+            is JSONObject -> {
+                val keys = root.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val hash = key.toIntOrNull() ?: continue
+                    entries[hash] = root.opt(key) ?: continue
+                }
+            }
+            else -> throw IllegalArgumentException("invalid_rules")
+        }
+        val packagesByHash = installedPackages.associateBy { packageHash(it) }
+        val editor = sp.edit()
+        var matchedApps = 0
+        var ruleCount = 0
+        var unmatchedHashes = 0
+        val packages = mutableSetOf<String>()
+        for ((hash, value) in entries) {
+            val packageName = packagesByHash[hash]
+            if (packageName == null) {
+                unmatchedHashes++
+                continue
+            }
+            val incoming = parseRuleValue(value)
+            if (incoming.isEmpty()) continue
+            matchedApps++
+            val merged = getRules(packageName).toMutableList()
+            var added = 0
+            for (rule in incoming) {
+                val index = merged.indexOfFirst { it.id == rule.id && it.action == rule.action }
+                if (index < 0) {
+                    merged.add(rule)
+                    added++
+                } else if (merged[index].times != rule.times || merged[index].delayMs != rule.delayMs) {
+                    merged[index] = rule
+                    added++
+                }
+            }
+            if (added == 0) continue
+            while (merged.size > MAX_RULES_PER_APP) merged.removeAt(merged.lastIndex)
+            editor.putString(key(packageName), encode(merged).toString())
+            ruleCount += added
+            packages.add(packageName)
+        }
+        editor.apply()
+        return ImportResult(matchedApps, ruleCount, unmatchedHashes, packages)
+    }
+
     private fun parseJson(raw: String): Any {
+        val candidate = extractJson(raw)
         return try {
-            JSONTokener(raw).nextValue()
+            JSONTokener(candidate).nextValue()
         } catch (first: Exception) {
-            val cleaned = raw.replace(Regex(",\\s*([}\\]])"), "$1")
-            if (cleaned == raw) throw first
+            val cleaned = candidate.replace(Regex(",\\s*([}\\]])"), "$1")
+            if (cleaned == candidate) throw first
             JSONTokener(cleaned).nextValue()
         }
+    }
+
+    private fun extractJson(raw: String): String {
+        val trimmed = raw.trim()
+        val arrayStart = trimmed.indexOf('[')
+        val objectStart = trimmed.indexOf('{')
+        val start = when {
+            arrayStart >= 0 && (objectStart < 0 || arrayStart < objectStart) -> arrayStart
+            objectStart >= 0 -> objectStart
+            else -> 0
+        }
+        val end = if (start < trimmed.length && trimmed[start] == '[') {
+            trimmed.lastIndexOf(']')
+        } else {
+            trimmed.lastIndexOf('}')
+        }
+        return if (start >= 0 && end > start) trimmed.substring(start, end + 1) else trimmed
     }
 
     private fun parseRuleObject(json: JSONObject): List<PopupRule> {

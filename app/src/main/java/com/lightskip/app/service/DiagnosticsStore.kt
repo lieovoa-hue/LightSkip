@@ -159,9 +159,6 @@ object DiagnosticsStore {
         builder.appendLine("hide background task: ${prefs.hideBackgroundTask}")
         builder.appendLine("popup mode: ${prefs.popupMode.name}")
         builder.appendLine("imported apps: ${ImportedRuleStore(context).importedAppCount()}")
-        builder.appendLine(
-            "learning: ${prefs.learningMode} armed=${prefs.learningArmed} count=${prefs.learningSavedCount}"
-        )
         builder.appendLine("protected apps: ${prefs.targetPackages.size}")
         builder.appendLine(
             "events: raw=$rawEventCount target=$eventCount state=$stateEventCount " +
@@ -189,7 +186,7 @@ object DiagnosticsStore {
         if (eventCount == 0 && contentEventCount == 0) {
             return "收到无障碍事件，但没有目标窗口事件（前台包名识别失败）"
         }
-        if (prefs.targetPackages.isEmpty()) return "未选择守护应用"
+        if (prefs.targetPackages.isEmpty()) return "未选择应用"
         if (scanCount == 0) return "收到事件，但未进入目标 App 扫描（前台包名识别失败或未打开目标）"
         if (lastSplashScanNote.startsWith("no candidate roots=0")) {
             return "扫描时未获取到目标应用窗口（MIUI/HyperOS 可能隔离了窗口树）"

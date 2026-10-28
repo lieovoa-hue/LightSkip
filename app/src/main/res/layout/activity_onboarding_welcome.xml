@@ -21,9 +21,13 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.lightskip.app.ui.LogoView
-                android:layout_width="38dp"
-                android:layout_height="38dp" />
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_brand_mark"
+                android:contentDescription="@null"
+                android:padding="7dp"
+                android:src="@drawable/ic_brand_glyph" />
 
             <LinearLayout
                 android:layout_width="0dp"

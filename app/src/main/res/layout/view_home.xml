@@ -23,9 +23,18 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_brand_mark"
+                android:contentDescription="@null"
+                android:padding="7dp"
+                android:src="@drawable/ic_brand_glyph" />
+
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -43,129 +52,42 @@
                     android:text="@string/home_status_title" />
             </LinearLayout>
 
-            <com.lightskip.app.ui.LogoView
-                android:layout_width="40dp"
-                android:layout_height="40dp" />
         </LinearLayout>
 
-        <FrameLayout
+        <LinearLayout
             android:id="@+id/guard_card"
             android:layout_width="match_parent"
-            android:layout_height="176dp"
+            android:layout_height="68dp"
             android:layout_marginTop="14dp"
             android:background="@drawable/bg_guard"
-            android:padding="15dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="18dp"
+            android:paddingRight="16dp">
 
-            <com.lightskip.app.ui.OrbitView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_dot_lime" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+            <TextView
+                android:id="@+id/guard_state"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:text="@string/guarding"
+                android:textColor="@color/on_forest"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="7dp"
-                        android:layout_height="7dp"
-                        android:background="@drawable/bg_dot_lime" />
-
-                    <TextView
-                        android:id="@+id/guard_state"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="@string/guarding"
-                        android:textColor="@color/mint"
-                        android:textSize="10.5sp"
-                        android:textStyle="bold" />
-
-                    <Space
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
-                    <com.lightskip.app.ui.ToggleView
-                        android:id="@+id/master_toggle"
-                        android:layout_width="38dp"
-                        android:layout_height="22dp"
-                        android:contentDescription="@string/guard_switch"
-                        app:lightStyle="true" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="bottom"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/home_count"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans"
-                        android:includeFontPadding="false"
-                        android:letterSpacing="-0.05"
-                        android:text="0"
-                        android:textColor="@color/on_forest"
-                        android:textSize="50sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/times"
-                        android:textColor="@color/mint"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginBottom="5dp"
-                        android:text="@string/today_skipped"
-                        android:textColor="@color/white_62"
-                        android:textSize="9.5sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="13dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/home_app_count"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/apps_zero"
-                        android:textColor="@color/white_72"
-                        android:textSize="10sp" />
-
-                    <Space
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_local_only"
-                        android:textColor="@color/white_62"
-                        android:textSize="9.5sp" />
-                </LinearLayout>
-            </LinearLayout>
-        </FrameLayout>
+            <com.lightskip.app.ui.ToggleView
+                android:id="@+id/master_toggle"
+                android:layout_width="44dp"
+                android:layout_height="26dp"
+                android:contentDescription="@string/guard_switch"
+                app:lightStyle="true" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -21,60 +21,12 @@ class RuleLearningStore(context: Context) {
         val relH: Float
     )
 
-    data class SaveResult(
-        val rule: LearnedRule,
-        val added: Boolean
-    )
-
     private val sp = context.getSharedPreferences("lightskip_rules", Context.MODE_PRIVATE)
 
     init {
         if (sp.getInt("schema_version", 0) < 1) {
             sp.edit().clear().putInt("schema_version", 1).apply()
         }
-    }
-
-    fun saveFromNode(
-        packageName: String,
-        viewId: String,
-        contentDescription: String,
-        text: String,
-        className: String,
-        bounds: Rect,
-        windowBounds: Rect,
-        activityClass: String
-    ): SaveResult? {
-        if (bounds.width() <= 0 || bounds.height() <= 0) return null
-        val window = usableWindow(bounds, windowBounds)
-        if (!isPlausibleCloseTarget(bounds, window, viewId, contentDescription, text)) return null
-        val relX = ((bounds.exactCenterX() - window.left) / window.width()).coerceIn(0f, 1f)
-        val relY = ((bounds.exactCenterY() - window.top) / window.height()).coerceIn(0f, 1f)
-        val relW = (bounds.width().toFloat() / window.width()).coerceIn(0f, 1f)
-        val relH = (bounds.height().toFloat() / window.height()).coerceIn(0f, 1f)
-        val rule = LearnedRule(
-            viewId = viewId,
-            contentDescription = contentDescription,
-            className = className,
-            activityClass = activityClass,
-            regionOnly = viewId.isBlank() && contentDescription.isBlank(),
-            relX = relX,
-            relY = relY,
-            relW = relW,
-            relH = relH
-        )
-        val rules = getRules(packageName).toMutableList()
-        var duplicate = false
-        rules.removeAll { existing ->
-            val same = (rule.viewId.isNotBlank() && existing.viewId == rule.viewId) ||
-                (rule.contentDescription.isNotBlank() && existing.contentDescription == rule.contentDescription) ||
-                (abs(existing.relX - rule.relX) < 0.03f && abs(existing.relY - rule.relY) < 0.03f)
-            if (same) duplicate = true
-            same
-        }
-        rules.add(0, rule)
-        while (rules.size > MAX_RULES) rules.removeAt(rules.lastIndex)
-        sp.edit().putString(key(packageName), encode(rules).toString()).apply()
-        return SaveResult(rule, !duplicate)
     }
 
     fun getRules(packageName: String): List<LearnedRule> {
@@ -84,16 +36,28 @@ class RuleLearningStore(context: Context) {
         }.getOrDefault(emptyList()).filterNot { isUnsafeRule(it) }
     }
 
-    fun canLearn(
-        viewId: String,
-        contentDescription: String,
-        text: String,
-        bounds: Rect,
-        windowBounds: Rect
-    ): Boolean {
-        if (bounds.width() <= 0 || bounds.height() <= 0) return false
-        val window = usableWindow(bounds, windowBounds)
-        return isPlausibleCloseTarget(bounds, window, viewId, contentDescription, text)
+    fun ruleCount(packageName: String): Int = getRules(packageName).size
+
+    fun storedAppCount(): Int = sp.all.keys.count { key ->
+        key.startsWith(KEY_PREFIX) && !sp.getString(key, null).isNullOrBlank()
+    }
+
+    fun removeRule(packageName: String, rule: LearnedRule): Boolean {
+        val rules = getRules(packageName).toMutableList()
+        val index = rules.indexOfFirst { sameRule(it, rule) }
+        if (index < 0) return false
+        rules.removeAt(index)
+        writeRules(packageName, rules)
+        return true
+    }
+
+    fun clearAll(): Int {
+        val keys = sp.all.keys.filter { it.startsWith(KEY_PREFIX) }
+        if (keys.isEmpty()) return 0
+        val editor = sp.edit()
+        keys.forEach { editor.remove(it) }
+        editor.apply()
+        return keys.size
     }
 
     fun matches(candidate: DiagnosticsStore.PopupCandidate, rule: LearnedRule): Boolean {
@@ -123,6 +87,25 @@ class RuleLearningStore(context: Context) {
 
     fun clear(packageName: String) {
         sp.edit().remove(key(packageName)).apply()
+    }
+
+    private fun writeRules(packageName: String, rules: List<LearnedRule>) {
+        if (rules.isEmpty()) {
+            sp.edit().remove(key(packageName)).apply()
+        } else {
+            sp.edit().putString(key(packageName), encode(rules).toString()).apply()
+        }
+    }
+
+    private fun sameRule(a: LearnedRule, b: LearnedRule): Boolean {
+        if (a.viewId.isNotBlank() && b.viewId.isNotBlank()) return a.viewId == b.viewId
+        if (a.contentDescription.isNotBlank() && b.contentDescription.isNotBlank()) {
+            return a.contentDescription == b.contentDescription
+        }
+        return abs(a.relX - b.relX) < 0.001f &&
+            abs(a.relY - b.relY) < 0.001f &&
+            abs(a.relW - b.relW) < 0.001f &&
+            abs(a.relH - b.relH) < 0.001f
     }
 
     private fun encode(rules: List<LearnedRule>): JSONArray {
@@ -168,42 +151,6 @@ class RuleLearningStore(context: Context) {
         return Rect(0, 0, bounds.right.coerceAtLeast(1), bounds.bottom.coerceAtLeast(1))
     }
 
-    private fun isPlausibleCloseTarget(
-        bounds: Rect,
-        window: Rect,
-        viewId: String,
-        contentDescription: String,
-        text: String
-    ): Boolean {
-        if (window.width() <= 0 || window.height() <= 0) return false
-        val relW = bounds.width().toFloat() / window.width()
-        val relH = bounds.height().toFloat() / window.height()
-        if (relW <= 0f || relH <= 0f) return false
-
-        val idHint = viewId.lowercase()
-        val textHint = text.trim().lowercase()
-        val descHint = contentDescription.trim().lowercase()
-        val explicitHint = idHint.contains("close") ||
-            idHint.contains("dismiss") ||
-            idHint.contains("skip") ||
-            descHint.contains("close") ||
-            descHint.contains("dismiss") ||
-            descHint.contains("关闭") ||
-            descHint.contains("跳过") ||
-            textHint.startsWith("跳过") ||
-            textHint.startsWith("关闭") ||
-            textHint in setOf("×", "x", "关闭", "关闭广告", "跳过", "skip", "close", "取消")
-        if (!explicitHint && NON_CLOSE_ID_HINTS.any { idHint.contains(it) }) {
-            return false
-        }
-        if (explicitHint) {
-            return relW <= 0.80f && relH <= 0.15f && relW * relH <= 0.10f
-        }
-        if (relW > 0.22f || relH > 0.16f) return false
-        if (relW * relH > 0.025f) return false
-        return abs(relW - relH) <= 0.12f
-    }
-
     private fun key(packageName: String): String = "rule_$packageName"
 
     private fun isUnsafeRule(rule: LearnedRule): Boolean {
@@ -214,8 +161,7 @@ class RuleLearningStore(context: Context) {
     }
 
     companion object {
-        const val MAX_RULES = 5
-
+        private const val KEY_PREFIX = "rule_"
         private val CLOSE_ID_HINTS = listOf("close", "dismiss", "skip")
         private val NON_CLOSE_ID_HINTS = listOf(
             "menu", "more", "action", "detail", "banner", "video",

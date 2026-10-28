@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/settings_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -30,60 +29,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/settings_title" />
-
-        <LinearLayout
-            android:id="@+id/settings_status_card"
-            android:layout_width="match_parent"
-            android:layout_height="68dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_guard"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp">
-
-            <ImageView
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:background="@drawable/bg_status_shield"
-                android:contentDescription="@null"
-                android:padding="9dp"
-                android:src="@drawable/ic_shield"
-                android:tint="@color/lime" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/settings_status_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_status_ok"
-                    android:textColor="@color/on_forest"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/settings_status_sub"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/settings_status_sub_ok"
-                    android:textColor="@color/white_68"
-                    android:textSize="9.5sp" />
-            </LinearLayout>
-
-            <com.lightskip.app.ui.ToggleView
-                android:id="@+id/settings_toggle"
-                android:layout_width="38dp"
-                android:layout_height="22dp"
-                android:contentDescription="@string/guard_switch"
-                app:lightStyle="true" />
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -418,51 +363,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/row_divider" />
-
-            <LinearLayout
-                android:id="@+id/row_learning"
-                style="@style/SettingsRow"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    style="@style/IconTile"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_scan" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="9dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/Text.Body"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/learning_title"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        style="@style/Text.Micro"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/learning_sub"
-                        android:textSize="9sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/value_learning"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/learning_off"
-                    android:textColor="@color/muted"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"

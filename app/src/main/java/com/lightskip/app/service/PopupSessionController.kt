@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Toast
 import com.lightskip.app.R
 import com.lightskip.app.data.ImportedRuleStore
 import com.lightskip.app.data.PopupMode
@@ -47,23 +46,11 @@ class PopupSessionController(
     private var lastClosedPackage: String? = null
     private var lastClosedAt = 0L
     private var cachedRulesPackage: String? = null
+    private var cachedRulesRevision = -1L
     private var cachedRules: List<RuleLearningStore.LearnedRule> = emptyList()
     private var sessionImportedRules: List<ImportedRuleStore.PopupRule> = emptyList()
-    private var learningCandidate: LearningNode? = null
-    private var lastLearningCaptureAt = 0L
+    private var sessionImportedRevision = -1L
     private var sessionRootHint: AccessibilityNodeInfo? = null
-
-    private data class LearningNode(
-        val packageName: String,
-        val viewId: String,
-        val contentDescription: String,
-        val text: String,
-        val className: String,
-        val bounds: Rect,
-        val windowBounds: Rect,
-        val activityClass: String,
-        val capturedAt: Long
-    )
 
     fun onWindowEvent(
         packageName: String,
@@ -73,7 +60,6 @@ class PopupSessionController(
     ) {
         if (!prefs.masterEnabled) return
         if (!bypassTargetCheck && !prefs.isTarget(packageName)) return
-        if (prefs.learningMode) return
         if (prefs.popupMode != PopupMode.LEARNED) return
         val rules = rulesFor(packageName)
         val hasLearnedContext = rules.any { learningStore.matchesContext(it, activityClass) }
@@ -93,7 +79,7 @@ class PopupSessionController(
 
     fun onContentChanged(packageName: String, activityClass: String = "") {
         if (active) {
-            if (!prefs.masterEnabled || prefs.learningMode || prefs.popupMode != PopupMode.LEARNED) {
+            if (!prefs.masterEnabled || prefs.popupMode != PopupMode.LEARNED) {
                 finish()
                 return
             }
@@ -103,7 +89,7 @@ class PopupSessionController(
             handler.postDelayed(contentScanRunnable, CONTENT_SCAN_DELAY_MS)
             return
         }
-        if (!prefs.masterEnabled || prefs.learningMode || prefs.popupMode != PopupMode.LEARNED) return
+        if (!prefs.masterEnabled || prefs.popupMode != PopupMode.LEARNED) return
         if (!prefs.isTarget(packageName) || !hasRules(packageName)) return
 
         val now = SystemClock.uptimeMillis()
@@ -115,158 +101,6 @@ class PopupSessionController(
 
     fun hasRules(packageName: String): Boolean {
         return rulesFor(packageName).isNotEmpty() || importedStore.hasRules(packageName)
-    }
-
-    fun captureLearningCandidates(
-        packageName: String,
-        activityClass: String,
-        rootHint: AccessibilityNodeInfo? = null
-    ) {
-        if (!prefs.learningMode || prefs.learningTargetPackage != packageName) return
-        val now = SystemClock.uptimeMillis()
-        if (now - lastLearningCaptureAt < 300L) return
-        lastLearningCaptureAt = now
-
-        val metrics = service.resources.displayMetrics
-        val nodes = scanner.collectNodes(
-            roots = rootsFor(packageName, rootHint),
-            targetPackage = packageName,
-            screenWidth = metrics.widthPixels,
-            screenHeight = metrics.heightPixels
-        )
-        var best: LearningNode? = null
-        var bestScore = Int.MIN_VALUE
-        for (node in nodes) {
-            if (node.clickable == null) continue
-            val bounds = node.bounds
-            if (bounds.width() >= metrics.widthPixels * 0.95f &&
-                bounds.height() >= metrics.heightPixels * 0.9f
-            ) {
-                continue
-            }
-            if (!learningStore.canLearn(
-                    viewId = node.viewId,
-                    contentDescription = node.contentDescription,
-                    text = node.text,
-                    bounds = bounds,
-                    windowBounds = node.windowBounds
-                )
-            ) {
-                continue
-            }
-            val hint = (node.text + " " + node.contentDescription + " " + node.viewId).lowercase()
-            var score = 0
-            if (hint.contains("close") ||
-                hint.contains("dismiss") ||
-                hint.contains("skip") ||
-                hint.contains("关闭") ||
-                hint.contains("跳过") ||
-                node.text.trim() in setOf("×", "x")
-            ) {
-                score += 100
-            }
-            if (bounds.width() <= metrics.widthPixels * 0.20f &&
-                bounds.height() <= metrics.heightPixels * 0.12f
-            ) {
-                score += 20
-            }
-            if (score > bestScore) {
-                bestScore = score
-                best = LearningNode(
-                    packageName = packageName,
-                    viewId = node.viewId,
-                    contentDescription = node.contentDescription,
-                    text = node.text,
-                    className = node.className,
-                    bounds = Rect(bounds),
-                    windowBounds = Rect(node.windowBounds),
-                    activityClass = activityClass,
-                    capturedAt = now
-                )
-            }
-        }
-        if (best != null) learningCandidate = best
-    }
-
-    fun onViewClicked(
-        packageName: String,
-        source: AccessibilityNodeInfo?,
-        activityClass: String,
-        windowBounds: Rect
-    ) {
-        if (!prefs.learningMode) return
-        if (source != null) {
-            val bounds = Rect()
-            source.getBoundsInScreen(bounds)
-            if (bounds.width() > 0 && bounds.height() > 0) {
-                val saved = learningStore.saveFromNode(
-                    packageName = packageName,
-                    viewId = source.viewIdResourceName.orEmpty(),
-                    contentDescription = source.contentDescription?.toString().orEmpty(),
-                    text = source.text?.toString().orEmpty(),
-                    className = source.className?.toString().orEmpty(),
-                    bounds = bounds,
-                    windowBounds = windowBounds,
-                    activityClass = activityClass
-                )
-                if (saved != null && commitLearnedRule(packageName, saved)) return
-            }
-        }
-
-        if (saveLearningCandidate(packageName, activityClass)) return
-        val message = if (rootsFor(packageName).isEmpty()) {
-            R.string.learning_window_blocked
-        } else {
-            R.string.learning_invalid_close
-        }
-        Toast.makeText(service, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun saveLearningCandidate(packageName: String, activityClass: String): Boolean {
-        val candidate = learningCandidate ?: return false
-        if (candidate.packageName != packageName ||
-            SystemClock.uptimeMillis() - candidate.capturedAt > 2_500L
-        ) {
-            return false
-        }
-        val saved = learningStore.saveFromNode(
-            packageName = packageName,
-            viewId = candidate.viewId,
-            contentDescription = candidate.contentDescription,
-            text = candidate.text,
-            className = candidate.className,
-            bounds = candidate.bounds,
-            windowBounds = candidate.windowBounds,
-            activityClass = candidate.activityClass.ifBlank { activityClass }
-        ) ?: return false
-        learningCandidate = null
-        return commitLearnedRule(packageName, saved)
-    }
-
-    private fun commitLearnedRule(packageName: String, saved: RuleLearningStore.SaveResult): Boolean {
-        if (!saved.added) {
-            Toast.makeText(service, R.string.learning_rule_duplicate, Toast.LENGTH_SHORT).show()
-            return false
-        }
-
-        prefs.popupMode = PopupMode.LEARNED
-        prefs.learningArmed = true
-        val count = (prefs.learningSavedCount + 1).coerceAtMost(RuleLearningStore.MAX_RULES)
-        prefs.learningSavedCount = count
-        invalidateRules()
-        DiagnosticsStore.recordScan(packageName, "learned close button", saved.rule.toDiagnostic(packageName))
-        if (count >= RuleLearningStore.MAX_RULES) {
-            prefs.stopLearning()
-            Toast.makeText(service, R.string.learning_rule_limit, Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(
-                service,
-                service.getString(R.string.learning_rule_saved_format, count),
-                Toast.LENGTH_LONG
-            ).show()
-        }
-        finish()
-        return true
     }
 
     private fun start(
@@ -284,6 +118,7 @@ class PopupSessionController(
         scanLimit = if (probe) PROBE_SCAN_LIMIT else SCAN_LIMIT
         contentScanLimit = if (probe) 1 else CONTENT_SCAN_LIMIT
         sessionImportedRules = importedStore.getRules(packageName)
+        sessionImportedRevision = prefs.rulesRevision
         deadline = now + (if (probe) PROBE_WINDOW_MS else POPUP_WINDOW_MS)
         attempts = 0
         scanCount = 0
@@ -304,7 +139,7 @@ class PopupSessionController(
 
     private fun scan(contentTriggered: Boolean = false) {
         if (!active) return
-        if (!prefs.masterEnabled || prefs.learningMode || prefs.popupMode != PopupMode.LEARNED) {
+        if (!prefs.masterEnabled || prefs.popupMode != PopupMode.LEARNED) {
             finish()
             return
         }
@@ -324,6 +159,10 @@ class PopupSessionController(
         if (contentTriggered) contentScanCount++
 
         val target = targetPackage ?: return
+        if (sessionImportedRevision != prefs.rulesRevision) {
+            sessionImportedRules = importedStore.getRules(target)
+            sessionImportedRevision = prefs.rulesRevision
+        }
         val learnedRules = rulesFor(target).filter {
             learningStore.matchesContext(it, targetActivityClass)
         }
@@ -429,6 +268,20 @@ class PopupSessionController(
                 continue
             }
 
+            val actionBounds = parseBounds(rule.action)
+            if (actionBounds != null) {
+                attempts++
+                if (tapAt(
+                        PointF(actionBounds.exactCenterX(), actionBounds.exactCenterY()),
+                        target,
+                        "imported bounds"
+                    )
+                ) {
+                    return true
+                }
+                continue
+            }
+
             val action = nodes.firstOrNull { node ->
                 node.windowId == trigger.windowId &&
                     node.clickable != null &&
@@ -443,20 +296,24 @@ class PopupSessionController(
     }
 
     private fun clickNodeView(node: NodeScanner.NodeView, target: String, note: String): Boolean {
+        if (tapAt(
+            PointF(node.bounds.exactCenterX(), node.bounds.exactCenterY()),
+            target,
+            note + " gesture"
+        )) {
+            return true
+        }
         val clickNode = node.clickable ?: node.node
         if (clickNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             DiagnosticsStore.recordClick(target, true, note)
             markClosed(target)
             return true
         }
-        return tapAt(
-            PointF(node.bounds.exactCenterX(), node.bounds.exactCenterY()),
-            target,
-            note + " gesture"
-        )
+        return false
     }
 
     private fun matchesIdentifier(node: NodeScanner.NodeView, raw: String): Boolean {
+        parseBounds(raw)?.let { return boundsMatch(node, it) }
         val fields = listOf(
             node.text,
             node.contentDescription,
@@ -468,6 +325,23 @@ class PopupSessionController(
         val orParts = splitNonEmpty(raw, '|')
         if (orParts.size > 1) return orParts.any { matchesAnd(fields, it) }
         return matchesAnd(fields, raw)
+    }
+
+    private fun parseBounds(raw: String): Rect? {
+        val parts = raw.split(',').map { it.trim().toIntOrNull() ?: return null }
+        if (parts.size != 4) return null
+        val left = minOf(parts[0], parts[2])
+        val top = minOf(parts[1], parts[3])
+        val right = maxOf(parts[0], parts[2])
+        val bottom = maxOf(parts[1], parts[3])
+        if (right - left < 4 || bottom - top < 4) return null
+        return Rect(left, top, right, bottom)
+    }
+
+    private fun boundsMatch(node: NodeScanner.NodeView, rect: Rect): Boolean {
+        val centerX = node.bounds.exactCenterX().toInt()
+        val centerY = node.bounds.exactCenterY().toInt()
+        return rect.contains(centerX, centerY)
     }
 
     private fun matchesAnd(fields: List<String>, raw: String): Boolean {
@@ -491,19 +365,26 @@ class PopupSessionController(
     }
 
     private fun clickCandidate(candidate: NodeScanner.Candidate, target: String): Boolean {
+        if (tapAt(
+            PointF(candidate.bounds.exactCenterX(), candidate.bounds.exactCenterY()),
+            target,
+            "learned gesture"
+        )) {
+            return true
+        }
         val clickNode = candidate.clickable ?: candidate.node
         if (clickNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             DiagnosticsStore.recordClick(target, true, "popup learned id=" + candidate.viewId.substringAfterLast('/').take(24))
             markClosed(target)
             return true
         }
-        return tapAt(PointF(candidate.bounds.exactCenterX(), candidate.bounds.exactCenterY()), target, "learned gesture")
+        return false
     }
 
     private fun tapAt(point: PointF, target: String, note: String): Boolean {
         val path = Path().apply { moveTo(point.x, point.y) }
         val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0L, 60L))
+        .addStroke(GestureDescription.StrokeDescription(path, 0L, TAP_DURATION_MS))
             .build()
         if (!service.dispatchGesture(gesture, null, null)) return false
         DiagnosticsStore.recordClick(target, true, note)
@@ -592,19 +473,16 @@ class PopupSessionController(
         scanLimit = SCAN_LIMIT
         contentScanLimit = CONTENT_SCAN_LIMIT
         sessionImportedRules = emptyList()
+        sessionImportedRevision = -1L
     }
 
     private fun rulesFor(packageName: String): List<RuleLearningStore.LearnedRule> {
-        if (cachedRulesPackage != packageName) {
+        if (cachedRulesPackage != packageName || cachedRulesRevision != prefs.rulesRevision) {
             cachedRules = learningStore.getRules(packageName)
             cachedRulesPackage = packageName
+            cachedRulesRevision = prefs.rulesRevision
         }
         return cachedRules
-    }
-
-    private fun invalidateRules() {
-        cachedRulesPackage = null
-        cachedRules = emptyList()
     }
 
     private fun NodeScanner.Candidate.toDiagnostic(pkg: String): DiagnosticsStore.PopupCandidate {
@@ -667,5 +545,6 @@ class PopupSessionController(
         const val PROBE_WINDOW_MS = 1_800L
         const val PROBE_SCAN_LIMIT = 2
         const val PROBE_COOLDOWN_MS = 2_000L
+        const val TAP_DURATION_MS = 10L
     }
 }

@@ -30,22 +30,6 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_HIDE_BACKGROUND, false)
         set(value) = sp.edit().putBoolean(KEY_HIDE_BACKGROUND, value).apply()
 
-    var learningMode: Boolean
-        get() = sp.getBoolean(KEY_LEARNING, false)
-        set(value) = sp.edit().putBoolean(KEY_LEARNING, value).apply()
-
-    var learningTargetPackage: String
-        get() = sp.getString(KEY_LEARNING_TARGET, "").orEmpty()
-        set(value) = sp.edit().putString(KEY_LEARNING_TARGET, value).apply()
-
-    var learningArmed: Boolean
-        get() = sp.getBoolean(KEY_LEARNING_ARMED, false)
-        set(value) = sp.edit().putBoolean(KEY_LEARNING_ARMED, value).apply()
-
-    var learningSavedCount: Int
-        get() = sp.getInt(KEY_LEARNING_COUNT, 0).coerceIn(0, RuleLearningStore.MAX_RULES)
-        set(value) = sp.edit().putInt(KEY_LEARNING_COUNT, value.coerceIn(0, RuleLearningStore.MAX_RULES)).apply()
-
     var onboardingDone: Boolean
         get() = sp.getBoolean(KEY_ONBOARDING, false)
         set(value) = sp.edit().putBoolean(KEY_ONBOARDING, value).apply()
@@ -53,6 +37,18 @@ class Prefs(context: Context) {
     var hasChosenApps: Boolean
         get() = sp.getBoolean(KEY_CHOSEN_APPS, false)
         set(value) = sp.edit().putBoolean(KEY_CHOSEN_APPS, value).apply()
+
+    var builtinRulesVersion: Int
+        get() = sp.getInt(KEY_BUILTIN_RULES, 0)
+        set(value) = sp.edit().putInt(KEY_BUILTIN_RULES, value).apply()
+
+    var splashRulesVersion: Int
+        get() = sp.getInt(KEY_SPLASH_RULES, 0)
+        set(value) = sp.edit().putInt(KEY_SPLASH_RULES, value).apply()
+
+    var rulesRevision: Long
+        get() = sp.getLong(KEY_RULES_REVISION, 0L)
+        set(value) = sp.edit().putLong(KEY_RULES_REVISION, value).apply()
 
     val effectiveWindowMs: Long
         get() = if (compatibilityMode) 10_000L else 6_000L
@@ -68,21 +64,8 @@ class Prefs(context: Context) {
         targetPackages = current
     }
 
-    fun startLearning(packageName: String) {
-        sp.edit()
-            .putString(KEY_LEARNING_TARGET, packageName)
-            .putBoolean(KEY_LEARNING, true)
-            .putBoolean(KEY_LEARNING_ARMED, false)
-            .putInt(KEY_LEARNING_COUNT, 0)
-            .apply()
-    }
-
-    fun stopLearning() {
-        sp.edit()
-            .putBoolean(KEY_LEARNING, false)
-            .putString(KEY_LEARNING_TARGET, "")
-            .putBoolean(KEY_LEARNING_ARMED, false)
-            .apply()
+    fun bumpRulesRevision() {
+        rulesRevision = rulesRevision + 1L
     }
 
     private fun cachedTargets(): Set<String> {
@@ -106,11 +89,10 @@ class Prefs(context: Context) {
         const val KEY_COMPAT = "compatibility_mode"
         const val KEY_POPUP = "popup_mode"
         const val KEY_HIDE_BACKGROUND = "hide_background_task"
-        const val KEY_LEARNING = "learning_mode"
-        const val KEY_LEARNING_TARGET = "learning_target_package"
-        const val KEY_LEARNING_ARMED = "learning_armed"
-        const val KEY_LEARNING_COUNT = "learning_saved_count"
         const val KEY_ONBOARDING = "onboarding_done"
         const val KEY_CHOSEN_APPS = "has_chosen_apps"
+        const val KEY_BUILTIN_RULES = "builtin_rules_version"
+        const val KEY_SPLASH_RULES = "splash_rules_version"
+        const val KEY_RULES_REVISION = "rules_revision"
     }
 }

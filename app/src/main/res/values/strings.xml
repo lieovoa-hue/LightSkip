@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">轻跳</string>
-    <string name="settings_status_unconnected">无障碍已开启但服务未连接</string>
-    <string name="settings_status_sub_unconnected">服务未连接，请在下方重新开关</string>
     <string name="copy">复制</string>
-    <string name="home_status_title">守护状态</string>
-    <string name="guard_switch">守护开关</string>
-    <string name="home_local_only">仅本地工作</string>
+    <string name="home_status_title">开屏跳过</string>
+    <string name="guard_switch">自动跳过开关</string>
+    <string name="master_state_permission">需要无障碍权限</string>
+    <string name="master_state_connecting">正在连接服务</string>
+    <string name="master_state_off">自动跳过已关闭</string>
+    <string name="master_state_on">自动跳过已开启</string>
     <string name="one_click_check">一键检查</string>
     <string name="check_accessibility">无障碍服务</string>
     <string name="check_accessibility_sub">系统设置中开启</string>
     <string name="check_accessibility_unconnected_sub">已开启但未连接，点此重新开关</string>
     <string name="accessibility_settings_confirm_title">打开系统无障碍设置？</string>
-    <string name="accessibility_settings_confirm_body">只有在你确认后，轻跳才会打开系统设置，用于开启或关闭轻跳的无障碍服务。\n\n如果只是想暂停跳广告，直接使用应用内的守护开关即可。</string>
+    <string name="accessibility_settings_confirm_body">只有在你确认后，轻跳才会打开系统设置，用于开启或关闭轻跳的无障碍服务。\n\n如果只是想暂停跳广告，直接使用首页的自动跳过开关即可。</string>
     <string name="check_background">后台运行</string>
     <string name="check_background_sub">按系统实际限制检测</string>
-    <string name="check_apps">守护应用</string>
+    <string name="check_apps">管理应用</string>
     <string name="check_apps_sub">选择要跳过的 App</string>
     <string name="check_popup">应用内弹窗</string>
     <string name="check_popup_sub">只执行学习或导入的规则</string>
@@ -34,35 +35,74 @@
     <string name="popup_learned">规则模式</string>
     <string name="popup_learned_warning">开启后只会执行你手动学习或导入的关闭规则，不再自动乱点右上角 X。</string>
     <string name="popup_mode_sub">执行学习和导入的规则</string>
-    <string name="learning_choose_app">选择要学习的应用</string>
-    <string name="learning_no_apps">请先在应用页开启要守护的应用</string>
-    <string name="learning_started_format">正在打开 %1$s，点广告上的 X/关闭/跳过即可记录</string>
-    <string name="learning_test_app">轻跳测试页（Debug）</string>
-    <string name="learning_title">学习关闭按钮</string>
-    <string name="learning_sub">自动打开 App，点广告上的 X / 关闭 / 跳过</string>
-    <string name="learning_off">未开启</string>
-    <string name="learning_waiting_splash">可点击广告按钮</string>
-    <string name="learning_captured_format">已记录 %1$d 个</string>
-    <string name="learning_armed">已进入学习，可继续点击广告按钮</string>
-    <string name="learning_rule_saved_format">已记录第 %1$d 个关闭按钮，可继续点下一个</string>
-    <string name="learning_rule_duplicate">这个关闭按钮已经记录过了</string>
-    <string name="learning_rule_limit">已记录 5 个关闭按钮，学习完成</string>
-    <string name="learning_invalid_close">请点广告上的 X、关闭或跳过按钮，不要点整张广告</string>
-    <string name="learning_window_blocked">系统未向无障碍服务暴露该窗口，无法学习控件。请改用导入规则，或保留小窗后再试</string>
-    <string name="learning_finished_format">学习结束，本次记录 %1$d 个关闭按钮</string>
-    <string name="learning_finished_none">学习结束，本次未记录规则</string>
-    <string name="learning_launch_failed">无法自动打开该应用，请手动打开后重试</string>
-    <string name="learning_service_required">请先开启并连接无障碍服务，再开始学习</string>
-    <string name="import_rules_title">导入自定义规则</string>
-    <string name="import_rules_sub">粘贴 AllRules.json，仅导入已安装 App</string>
-    <string name="import_rules_value">导入</string>
+    <string name="import_rules_title">自定义规则</string>
+    <string name="import_rules_sub">按 App 管理、导入或导出规则</string>
+    <string name="import_rules_value">管理</string>
     <string name="import_rules_empty">剪贴板里没有规则文本</string>
     <string name="import_rules_invalid">规则格式不正确</string>
     <string name="import_rules_success_format">已导入 %1$d 个 App，共 %2$d 条规则</string>
     <string name="import_rules_none_format">格式有效，但没有匹配到已安装 App（%1$d 个哈希未匹配）</string>
-    <string name="import_rules_choose_app">选择规则所属 App</string>
+    <string name="import_rules_already_exists">规则已经存在，没有新增内容</string>
     <string name="import_rules_single_success_format">已为 %1$s 导入 %2$d 条规则</string>
-    <string name="import_rules_count_format">已导入 %1$d 个</string>
+    <string name="import_rules_count_format">%1$d 个 App</string>
+    <string name="rule_manager_title">自定义规则</string>
+    <string name="rule_manager_sub">按 App 管理，支持整串导入和导出</string>
+    <string name="rule_import_all">导入全部规则</string>
+    <string name="rule_export_all">导出全部规则</string>
+    <string name="rule_clear_all">清空全部规则</string>
+    <string name="rule_restore_builtin">恢复内置规则</string>
+    <string name="rule_import_all_dialog_title">导入全部规则</string>
+    <string name="rule_import_app_dialog_title">为 %1$s 导入规则</string>
+    <string name="rule_import_dialog_hint">在这里粘贴完整规则，支持 JSON、Markdown 代码块或李跳跳 AllRules 格式</string>
+    <string name="rule_import_dialog_note">全部导入会按包名匹配已安装 App，并与现有规则合并；单 App 导入只影响当前 App。</string>
+    <string name="rule_import_dialog_confirm">导入</string>
+    <string name="rule_no_apps">还没有选择应用，请先在应用页选择</string>
+    <string name="rule_manager_note">顶部“导入全部规则”会一次导入整串规则并自动合并；点 App 后再新增只对当前 App 生效。开屏跳过规则独立保存，清空这里的规则不会影响开屏跳过。</string>
+    <string name="rule_count_format">%d 条</string>
+    <string name="rule_none_short">未配置</string>
+    <string name="rule_empty">暂无自定义规则，点下方新增</string>
+    <string name="rule_add">新增</string>
+    <string name="rule_edit">编辑规则</string>
+    <string name="rule_example">举例</string>
+    <string name="rule_example_filled">已填入示例，可修改后保存</string>
+    <string name="rule_delete">删除</string>
+    <string name="rule_imported_section">内置 / 导入规则</string>
+    <string name="rule_learned_section">学习规则</string>
+    <string name="rule_learned_region">屏幕位置区域</string>
+    <string name="rule_clear_app">清空此 App 应用内规则</string>
+    <string name="rule_clear_confirm_title">清空规则？</string>
+    <string name="rule_clear_confirm_msg">将删除该 App 的内置、导入和学习规则；开屏跳过规则独立保留，应用选择范围不受影响。</string>
+    <string name="rule_clear_confirm">清空</string>
+    <string name="rule_clear_all_confirm_title">清空全部规则？</string>
+    <string name="rule_clear_all_confirm_msg">将删除所有应用内规则和学习规则；开屏跳过规则独立保留。应用选择范围不受影响，此操作不可撤销。</string>
+    <string name="rule_clear_all_done">已清空全部规则</string>
+    <string name="rule_clear_all_empty">没有可删除的规则</string>
+    <string name="rule_record_close">录制关闭按钮</string>
+    <string name="rule_record_cancel">取消</string>
+    <string name="rule_record_done">完成录制</string>
+    <string name="rule_record_drag_hint">拖动 X 对准真实关闭按钮</string>
+    <string name="rule_record_service">请先开启并连接无障碍服务</string>
+    <string name="rule_record_launch_failed">无法打开该应用</string>
+    <string name="rule_record_failed">没有记录到按钮，请重试</string>
+    <string name="rule_record_saved">已记录关闭按钮，返回轻跳查看</string>
+    <string name="rule_trigger_label">触发条件（弹窗文字 / id / bounds）</string>
+    <string name="rule_trigger_hint">例如：广告 / close_view / 0,0,1080,2340</string>
+    <string name="rule_action_label">关闭动作（文字 / id / bounds）</string>
+    <string name="rule_action_hint">例如：关闭 / iv_close / 950,120,1040,210</string>
+    <string name="rule_back_close">允许用返回键关闭</string>
+    <string name="rule_back_short">返回键</string>
+    <string name="rule_fields_required">触发条件和关闭动作不能为空</string>
+    <string name="rule_import_app">导入规则</string>
+    <string name="rule_export_title">导出规则</string>
+    <string name="rule_export_sub">导出为李跳跳兼容 JSON，可复制或分享。</string>
+    <string name="rule_export_empty">还没有可导出的自定义规则</string>
+    <string name="rule_copied">规则已复制</string>
+    <string name="builtin_rules_seeded">已加载内置基础规则，可在自定义规则中管理或删除</string>
+    <string name="builtin_rules_restored_format">已恢复 %1$d 条内置规则</string>
+    <string name="builtin_rules_restored_none">内置规则已经完整，无需恢复</string>
+    <string name="save">保存</string>
+    <string name="share">分享</string>
+    <string name="close">关闭</string>
     <string name="diagnostics_title">诊断与反馈</string>
     <string name="diagnostics_sub">复制或分享脱敏日志</string>
     <string name="diagnostics_copied">诊断信息已复制</string>
@@ -73,7 +113,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 多窗口</string>
-    <string name="version_line_02">轻跳 0.3.9 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.4.0 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>
@@ -110,35 +150,29 @@
     <string name="notice_android13">Android 13+ 若提示“受限设置”，请允许轻跳启用无障碍。</string>
     <string name="permission_foot">系统不会自动开启，你可以随时关闭。</string>
 
-    <string name="apps_onboarding_title">选择要守护的应用</string>
+    <string name="apps_onboarding_title">选择要跳过的应用</string>
     <string name="apps_onboarding_sub">推荐已为你勾选，随时可以改。</string>
     <string name="apps_done">完成</string>
     <string name="apps_after">之后可以在「应用」里随时调整</string>
 
-    <string name="times">次</string>
     <string name="apps_zero">0 个应用</string>
     <string name="nav_home">首页</string>
     <string name="nav_apps">应用</string>
     <string name="nav_settings">设置</string>
 
-    <string name="guarding">守护中</string>
-    <string name="paused">已暂停</string>
-    <string name="needs_permission">需要授权</string>
-    <string name="today_skipped">今日已自动跳过</string>
+    <string name="guarding">已开启</string>
     <string name="apps_count_format">%d 个应用</string>
     <string name="home_privacy">不读取输入框 · 不保存画面 · 无网络权限</string>
 
-    <string name="beta_version">v0.3.9</string>
+    <string name="beta_version">v0.4.0</string>
     <string name="skip_label">跳过</string>
     <string name="check_done">已自动跳过</string>
     <string name="ad_tag">AD</string>
     <string name="select_all">全选</string>
     <string name="clear_all">清空</string>
-    <string name="settings_status_paused">守护已暂停</string>
-    <string name="settings_status_sub_paused">轻跳已连接，当前暂停识别</string>
-    <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">守护范围</string>
+    <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">应用范围</string>
     <string name="apps_summary_zero">0 个已启用 · 0 个已排除</string>
-    <string name="version_short">轻跳 0.3.9</string>    <string name="apps_page_title">选择要守护的应用</string>
+    <string name="version_short">轻跳 0.4.0</string>    <string name="apps_page_title">选择要跳过的应用</string>
     <string name="apps_summary_format">%1$d 个已启用 · %2$d 个已排除</string>
     <string name="filter_count_format">%1$s %2$d</string>
     <string name="filter_all">全部</string>
@@ -151,10 +185,6 @@
     <string name="no_match">没有匹配的应用</string>
 
     <string name="settings_title">设置</string>
-    <string name="settings_status_ok">守护正常</string>
-    <string name="settings_status_off">无障碍服务未开启</string>
-    <string name="settings_status_sub_ok">无障碍服务已连接</string>
-    <string name="settings_status_sub_off">请在下方「无障碍服务」中开启</string>
     <string name="background_stability">后台稳定运行</string>
     <string name="background_stability_sub">系统省电可能暂停无障碍服务</string>
     <string name="background_stability_value">去设置</string>
@@ -169,7 +199,7 @@
     <string name="privacy_sub">看懂轻跳能做什么、不能做什么</string>
     <string name="cancel">取消</string>
     <string name="privacy_title">轻跳如何工作</string>
-    <string name="privacy_body">轻跳只做一件事：在已守护的应用进入前台后的短会话内（兼容模式最多 10 秒），识别并尝试点击「跳过」「关闭」或 X 按钮。\n\n· 不读取输入框内容\n· 不保存屏幕画面\n· 不申请网络权限\n· 统计数据只留在本机\n\n你可以在系统设置中随时关闭无障碍服务。</string>
+    <string name="privacy_body">轻跳只做一件事：在已选择的应用进入前台后的短会话内（兼容模式最多 10 秒），识别并尝试点击「跳过」「关闭」或 X 按钮。\n\n· 不读取输入框内容\n· 不保存屏幕画面\n· 不申请网络权限\n· 不联网\n\n你可以在系统设置中随时关闭无障碍服务。</string>
     <string name="demo_entry">测试开屏</string>
     <string name="demo_entry_sub">打开一个假开屏页面验证识别</string>
     <string name="demo_skip">跳过 5</string>
@@ -182,5 +212,5 @@
     <string name="toast_no_launcher_apps">没有找到桌面可见应用</string>
 
     <string name="accessibility_service_label">轻跳 · 开屏跳过</string>
-    <string name="accessibility_description">轻跳只在已守护的应用进入前台后的短会话内，识别并尝试点击「跳过」「关闭」或 X 按钮。兼容模式最多 10 秒。不读取输入框，不保存屏幕画面，不联网。</string>
+    <string name="accessibility_description">轻跳只在已选择的应用进入前台后的短会话内，识别并尝试点击「跳过」「关闭」或 X 按钮。兼容模式最多 10 秒。不读取输入框，不保存屏幕画面，不联网。</string>
 </resources>

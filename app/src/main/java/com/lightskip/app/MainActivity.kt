@@ -9,8 +9,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -23,7 +21,6 @@ import android.widget.Toast
 import com.lightskip.app.data.AppEntry
 import com.lightskip.app.data.AppRepository
 import com.lightskip.app.data.ImportedRuleStore
-import com.lightskip.app.data.LocalStats
 import com.lightskip.app.data.PopupMode
 import com.lightskip.app.data.Prefs
 import com.lightskip.app.service.DiagnosticsStore
@@ -33,7 +30,6 @@ import com.lightskip.app.util.AccessibilityUtils
 import com.lightskip.app.util.BackgroundStatusUtils
 import com.lightskip.app.util.SystemBarUtils
 import com.lightskip.app.util.TaskUtils
-import com.lightskip.app.util.formatCount
 
 class MainActivity : Activity() {
 
@@ -41,30 +37,25 @@ class MainActivity : Activity() {
     private enum class Filter { ALL, ENABLED, EXCLUDED }
 
     private lateinit var prefs: Prefs
-    private lateinit var stats: LocalStats
     private lateinit var repo: AppRepository
     private lateinit var importedRules: ImportedRuleStore
+    private lateinit var splashRules: ImportedRuleStore
     private lateinit var appListAdapter: AppListAdapter
     private var allApps: List<AppEntry> = emptyList()
     private var currentTab = Tab.HOME
     private var appsFilter = Filter.ALL
     private var searchQuery = ""
     private var keepTaskOnStop = false
-    private val learningUiHandler = Handler(Looper.getMainLooper())
-    private val finishLearningUiRunnable = Runnable {
-        if (prefs.learningMode) {
-            finishLearningIfReturned()
-            refreshSettings()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
-        stats = LocalStats(this)
-        stats.prune()
         repo = AppRepository(this)
         importedRules = ImportedRuleStore(this)
+        splashRules = ImportedRuleStore(
+            this,
+            prefsName = "lightskip_splash_rules",
+            builtinAsset = "builtin_splash_rules.json"
+        )
 
         if (!prefs.onboardingDone) {
             startActivity(Intent(this, OnboardingActivity::class.java))
@@ -72,6 +63,9 @@ class MainActivity : Activity() {
             return
         }
 
+        removeLegacySplashRules()
+        seedBuiltinRulesIfNeeded()
+        seedSplashRulesIfNeeded()
         setContentView(R.layout.activity_main)
         SystemBarUtils.apply(this)
         bindNavigation()
@@ -86,10 +80,6 @@ class MainActivity : Activity() {
         super.onResume()
         keepTaskOnStop = false
         TaskUtils.setExcludeFromRecents(this, prefs.hideBackgroundTask)
-        if (prefs.learningMode) {
-            learningUiHandler.removeCallbacks(finishLearningUiRunnable)
-            learningUiHandler.postDelayed(finishLearningUiRunnable, 1_700L)
-        }
         refreshHome()
         refreshSettings()
         if (currentTab == Tab.APPS) refreshApps()
@@ -107,7 +97,6 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
-        learningUiHandler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 
@@ -153,11 +142,6 @@ class MainActivity : Activity() {
     private fun bindHome() {
         findViewById<ToggleView>(R.id.master_toggle).onCheckedChange = { handleMasterToggle(it) }
 
-        findViewById<View>(R.id.guard_card).setOnClickListener {
-            if (!AccessibilityUtils.isServiceEnabled(this)) {
-                Toast.makeText(this, R.string.toast_service_needed, Toast.LENGTH_SHORT).show()
-            }
-        }
         findViewById<View>(R.id.check_accessibility).setOnClickListener {
             confirmOpenAccessibilitySettings()
         }
@@ -173,12 +157,41 @@ class MainActivity : Activity() {
         if (checked && !AccessibilityUtils.isServiceEnabled(this)) {
             Toast.makeText(this, R.string.toast_service_needed, Toast.LENGTH_SHORT).show()
             findViewById<ToggleView>(R.id.master_toggle).setChecked(false, animate = true)
-            findViewById<ToggleView>(R.id.settings_toggle).setChecked(false, animate = true)
             return
         }
         prefs.masterEnabled = checked
         refreshHome()
         refreshSettings()
+    }
+
+    private fun seedBuiltinRulesIfNeeded() {
+        if (prefs.builtinRulesVersion >= BUILTIN_RULES_VERSION) return
+        prefs.builtinRulesVersion = BUILTIN_RULES_VERSION
+        val installed = repo.load().map { it.packageName }.toSet()
+        val result = runCatching {
+            importedRules.importBuiltinRules(this, installed)
+        }.getOrNull() ?: return
+        if (result.ruleCount > 0) {
+            prefs.popupMode = PopupMode.LEARNED
+            prefs.bumpRulesRevision()
+            Toast.makeText(this, R.string.builtin_rules_seeded, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun seedSplashRulesIfNeeded() {
+        if (prefs.splashRulesVersion >= SPLASH_RULES_VERSION) return
+        prefs.splashRulesVersion = SPLASH_RULES_VERSION
+        val installed = repo.load().map { it.packageName }.toSet()
+        runCatching { splashRules.importBuiltinRules(this, installed) }
+    }
+
+    private fun removeLegacySplashRules() {
+        val splashIds = setOf("main_splash_ad", "startUpView")
+        listOf("com.coolapk.market", "cn.mucang.android.smart").forEach { packageName ->
+            val rules = importedRules.getRules(packageName)
+            val kept = rules.filterNot { it.id in splashIds }
+            if (kept.size != rules.size) importedRules.setRules(packageName, kept)
+        }
     }
 
     private fun refreshHome() {
@@ -189,18 +202,13 @@ class MainActivity : Activity() {
 
         findViewById<TextView>(R.id.guard_state).setText(
             when {
-                !serviceEnabled -> R.string.needs_permission
-                !masterEnabled -> R.string.paused
-                !connected -> R.string.status_not_connected
-                else -> R.string.guarding
+                !serviceEnabled -> R.string.master_state_permission
+                !connected -> R.string.master_state_connecting
+                !masterEnabled -> R.string.master_state_off
+                else -> R.string.master_state_on
             }
         )
         findViewById<ToggleView>(R.id.master_toggle).setChecked(active, animate = false)
-
-        val skips = stats.todaySkips()
-        findViewById<TextView>(R.id.home_count).text = formatCount(skips)
-        findViewById<TextView>(R.id.home_app_count).text =
-            getString(R.string.apps_count_format, prefs.targetPackages.size)
 
         val accessibilitySub = findViewById<TextView>(R.id.check_accessibility_sub)
         accessibilitySub.setText(
@@ -388,7 +396,6 @@ class MainActivity : Activity() {
     }
 
     private fun bindSettings() {
-        findViewById<ToggleView>(R.id.settings_toggle).onCheckedChange = { handleMasterToggle(it) }
         findViewById<View>(R.id.row_accessibility).setOnClickListener {
             confirmOpenAccessibilitySettings()
         }
@@ -407,8 +414,9 @@ class MainActivity : Activity() {
             refreshSettings()
         }
         findViewById<View>(R.id.row_popup).setOnClickListener { showPopupModeDialog() }
-        findViewById<View>(R.id.row_import_rules).setOnClickListener { importRulesFromClipboard() }
-        findViewById<View>(R.id.row_learning).setOnClickListener { onLearningClicked() }
+        findViewById<View>(R.id.row_import_rules).setOnClickListener {
+            startActivity(Intent(this, RuleManagerActivity::class.java))
+        }
         findViewById<View>(R.id.row_diagnostics).setOnClickListener { showDiagnosticsDialog() }
         findViewById<View>(R.id.row_privacy).setOnClickListener {
             showInfoDialog(R.string.privacy_title, R.string.privacy_body)
@@ -427,29 +435,6 @@ class MainActivity : Activity() {
     private fun refreshSettings() {
         val serviceEnabled = AccessibilityUtils.isServiceEnabled(this)
         val connected = DiagnosticsStore.serviceConnected
-        val active = serviceEnabled && prefs.masterEnabled
-
-        val title = findViewById<TextView>(R.id.settings_status_title)
-        val sub = findViewById<TextView>(R.id.settings_status_sub)
-        when {
-            !serviceEnabled -> {
-                title.setText(R.string.settings_status_off)
-                sub.setText(R.string.settings_status_sub_off)
-            }
-            !connected -> {
-                title.setText(R.string.settings_status_unconnected)
-                sub.setText(R.string.settings_status_sub_unconnected)
-            }
-            !prefs.masterEnabled -> {
-                title.setText(R.string.settings_status_paused)
-                sub.setText(R.string.settings_status_sub_paused)
-            }
-            else -> {
-                title.setText(R.string.settings_status_ok)
-                sub.setText(R.string.settings_status_sub_ok)
-            }
-        }
-        findViewById<ToggleView>(R.id.settings_toggle).setChecked(active, animate = false)
 
         val accessibilityValue = findViewById<TextView>(R.id.value_accessibility)
         when {
@@ -472,21 +457,6 @@ class MainActivity : Activity() {
             } else {
                 getString(R.string.import_rules_value)
             }
-        val learningValue = findViewById<TextView>(R.id.value_learning)
-        when {
-            !prefs.learningMode -> {
-                learningValue.setText(R.string.learning_off)
-                learningValue.setTextColor(getColor(R.color.muted))
-            }
-            !prefs.learningArmed -> {
-                learningValue.setText(R.string.learning_waiting_splash)
-                learningValue.setTextColor(getColor(R.color.amber_text))
-            }
-            else -> {
-                learningValue.text = getString(R.string.learning_captured_format, prefs.learningSavedCount)
-                learningValue.setTextColor(getColor(R.color.forest_text))
-            }
-        }
     }
 
     private fun popupModeLabel(mode: PopupMode): Int = when (mode) {
@@ -525,163 +495,6 @@ class MainActivity : Activity() {
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
-
-    private fun onLearningClicked() {
-        if (prefs.learningMode) {
-            learningUiHandler.removeCallbacks(finishLearningUiRunnable)
-            finishLearningIfReturned()
-            refreshSettings()
-            return
-        }
-        if (!AccessibilityUtils.isServiceEnabled(this) || !DiagnosticsStore.serviceConnected) {
-            Toast.makeText(this, R.string.learning_service_required, Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val entries = mutableListOf<Pair<String, String>>()
-        if (BuildConfig.DEBUG) entries.add(packageName to getString(R.string.learning_test_app))
-        entries.addAll(
-            repo.load()
-                .filter { prefs.isTarget(it.packageName) }
-                .map { it.packageName to it.label }
-        )
-        if (entries.isEmpty()) {
-            Toast.makeText(this, R.string.learning_no_apps, Toast.LENGTH_SHORT).show()
-            return
-        }
-        val labels = entries.map { it.second }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle(R.string.learning_choose_app)
-            .setItems(labels) { _, which ->
-                val (targetPackage, label) = entries[which]
-                prefs.startLearning(targetPackage)
-                Toast.makeText(
-                    this,
-                    getString(R.string.learning_started_format, label),
-                    Toast.LENGTH_LONG
-                ).show()
-                refreshSettings()
-                if (!launchLearningTarget(targetPackage)) {
-                    prefs.stopLearning()
-                    Toast.makeText(this, R.string.learning_launch_failed, Toast.LENGTH_LONG).show()
-                    refreshSettings()
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun launchLearningTarget(targetPackage: String): Boolean {
-        if (BuildConfig.DEBUG && targetPackage == packageName) {
-            keepTaskOnStop = true
-            return try {
-                startActivity(
-                    Intent().setClassName(packageName, "com.lightskip.app.DemoPopupActivity")
-                )
-                true
-            } catch (_: Exception) {
-                keepTaskOnStop = false
-                false
-            }
-        }
-
-        val intent = packageManager.getLaunchIntentForPackage(targetPackage) ?: return false
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        return try {
-            startActivity(intent)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun finishLearningIfReturned() {
-        if (!prefs.learningMode) return
-        val count = prefs.learningSavedCount
-        prefs.stopLearning()
-        val message = if (count > 0) {
-            getString(R.string.learning_finished_format, count)
-        } else {
-            getString(R.string.learning_finished_none)
-        }
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun importRulesFromClipboard() {
-        val clipboard = getSystemService(ClipboardManager::class.java)
-        val raw = clipboard.primaryClip
-            ?.takeIf { it.itemCount > 0 }
-            ?.getItemAt(0)
-            ?.coerceToText(this)
-            ?.toString()
-            ?.trim()
-            .orEmpty()
-        if (raw.isEmpty()) {
-            Toast.makeText(this, R.string.import_rules_empty, Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val installedPackages = repo.load().map { it.packageName }.toSet()
-        val result = runCatching {
-            importedRules.importAllRules(raw, installedPackages)
-        }.getOrNull()
-        if (result != null) {
-            if (result.ruleCount > 0) {
-                val targets = prefs.targetPackages.toMutableSet()
-                targets.addAll(result.packages)
-                prefs.targetPackages = targets
-                prefs.popupMode = PopupMode.LEARNED
-                Toast.makeText(
-                    this,
-                    getString(R.string.import_rules_success_format, result.matchedApps, result.ruleCount),
-                    Toast.LENGTH_LONG
-                ).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    getString(R.string.import_rules_none_format, result.unmatchedHashes),
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-            refreshHome()
-            refreshSettings()
-            return
-        }
-
-        chooseImportTarget(raw)
-    }
-
-    private fun chooseImportTarget(raw: String) {
-        val apps = repo.load()
-        if (apps.isEmpty()) {
-            Toast.makeText(this, R.string.import_rules_invalid, Toast.LENGTH_SHORT).show()
-            return
-        }
-        val labels = apps.map { it.label }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle(R.string.import_rules_choose_app)
-            .setItems(labels) { _, which ->
-                val entry = apps[which]
-                val count = runCatching {
-                    importedRules.importForPackage(entry.packageName, raw)
-                }.getOrNull() ?: run {
-                    Toast.makeText(this, R.string.import_rules_invalid, Toast.LENGTH_LONG).show()
-                    return@setItems
-                }
-                prefs.setTarget(entry.packageName, true)
-                prefs.popupMode = PopupMode.LEARNED
-                Toast.makeText(
-                    this,
-                    getString(R.string.import_rules_single_success_format, entry.label, count),
-                    Toast.LENGTH_LONG
-                ).show()
-                refreshHome()
-                refreshSettings()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
 
     private fun showBackgroundDialog() {
         AlertDialog.Builder(this)
@@ -758,5 +571,10 @@ class MainActivity : Activity() {
             keepTaskOnStop = false
             Toast.makeText(this, R.string.toast_demo_missing, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private companion object {
+        const val BUILTIN_RULES_VERSION = 6
+        const val SPLASH_RULES_VERSION = 1
     }
 }
