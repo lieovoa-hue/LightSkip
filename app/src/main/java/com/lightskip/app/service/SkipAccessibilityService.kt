@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import com.lightskip.app.BuildConfig
@@ -32,12 +33,16 @@ class SkipAccessibilityService : AccessibilityService() {
     private val useAllEventsForOem = Build.MANUFACTURER.equals("Xiaomi", true) ||
         Build.BRAND.equals("Redmi", true) ||
         Build.BRAND.equals("POCO", true)
+    private var lastDiagnosticsDetailAt = 0L
     private val learningHandler = Handler(Looper.getMainLooper())
     private var learningArmPackage: String? = null
     private val learningArmRunnable = Runnable {
         val packageName = learningArmPackage ?: return@Runnable
         learningArmPackage = null
         armLearning(packageName, requireForeground = true)
+    }
+    private val learningFinishRunnable = Runnable {
+        if (prefs.learningMode) finishLearningSession()
     }
 
     override fun onServiceConnected() {
@@ -48,7 +53,7 @@ class SkipAccessibilityService : AccessibilityService() {
             popupController.cancel()
         }
         prefs = Prefs(this)
-        stats = LocalStats(this, prefs)
+        stats = LocalStats(this)
         stats.prune()
         learningStore = RuleLearningStore(this)
         importedStore = ImportedRuleStore(this)
@@ -58,9 +63,8 @@ class SkipAccessibilityService : AccessibilityService() {
             service = this,
             prefs = prefs,
             scanner = scanner,
-            onSessionStarted = { stats.recordSession() },
-            onSkipped = { packageName, responseMs ->
-                stats.recordSkip(packageName, responseMs)
+            onSkipped = { packageName ->
+                stats.recordSkip()
                 armLearning(packageName, requireForeground = false)
             },
             onActiveChanged = { refreshServiceInfo() }
@@ -71,11 +75,10 @@ class SkipAccessibilityService : AccessibilityService() {
             scanner = scanner,
             learningStore = learningStore,
             importedStore = importedStore,
-            onPopupClosed = { packageName -> stats.recordSkip(packageName, -1L) },
+            onPopupClosed = { stats.recordSkip() },
             onActiveChanged = { refreshServiceInfo() }
         )
         DiagnosticsStore.serviceConnected = true
-        DiagnosticsStore.serviceConnectedAt = System.currentTimeMillis()
         refreshServiceInfo()
     }
 
@@ -92,11 +95,9 @@ class SkipAccessibilityService : AccessibilityService() {
             className.contains("DemoSplashActivity")
         val isDemoPopup = BuildConfig.DEBUG &&
             isOwnApp &&
-            (className.contains("Demo") && className.contains("Popup")) ||
-            (BuildConfig.DEBUG &&
-                isOwnApp &&
-                lastForegroundActivityClass.contains("Demo") &&
-                lastForegroundActivityClass.contains("Popup"))
+            ((className.contains("Demo") && className.contains("Popup")) ||
+                (lastForegroundActivityClass.contains("Demo") &&
+                    lastForegroundActivityClass.contains("Popup")))
         val watched = prefs.masterEnabled &&
             (prefs.isTarget(packageName) || isDemoSplash || isDemoPopup)
         val learningClick = eventType == AccessibilityEvent.TYPE_VIEW_CLICKED &&
@@ -120,7 +121,7 @@ class SkipAccessibilityService : AccessibilityService() {
         when (eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 if (isOwnApp && !isDemoSplash && !isDemoPopup) {
-                    if (prefs.learningMode) finishLearningSession()
+                    if (prefs.learningMode) scheduleLearningFinish()
                     controller.cancel()
                     popupController.cancel()
                     lastForegroundPackage = packageName
@@ -130,6 +131,9 @@ class SkipAccessibilityService : AccessibilityService() {
                 }
 
                 if (!watched) {
+                    if (prefs.learningMode) {
+                        scheduleLearningFinish()
+                    }
                     controller.cancel()
                     popupController.cancel()
                     lastForegroundPackage = packageName
@@ -164,8 +168,15 @@ class SkipAccessibilityService : AccessibilityService() {
             }
 
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
-                if (!watched) return
+                val learningWatching = prefs.learningMode && prefs.learningTargetPackage.isNotBlank()
+                if (!watched && !learningWatching) return
                 recordDiagnostics(packageName, eventType, className)
+                if (learningWatching) {
+                    popupController.captureLearningCandidates(
+                        prefs.learningTargetPackage,
+                        lastForegroundActivityClass
+                    )
+                }
                 controller.onContentChanged(packageName)
                 if (prefs.popupMode == PopupMode.LEARNED) {
                     popupController.onWindowEvent(
@@ -178,7 +189,14 @@ class SkipAccessibilityService : AccessibilityService() {
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 DiagnosticsStore.noteContentEvent()
-                if (!watched) return
+                val learningWatching = prefs.learningMode && prefs.learningTargetPackage.isNotBlank()
+                if (!watched && !learningWatching) return
+                if (learningWatching) {
+                    popupController.captureLearningCandidates(
+                        prefs.learningTargetPackage,
+                        lastForegroundActivityClass
+                    )
+                }
                 val popupWatching = popupController.isRunning || shouldWatchForegroundPopup()
                 if (!controller.isRunning && !popupWatching) return
                 controller.onContentChanged(packageName)
@@ -190,18 +208,9 @@ class SkipAccessibilityService : AccessibilityService() {
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 if (!learningClick) return
                 recordDiagnostics(packageName, eventType, className)
-                val source = event.source
-                if (source == null) {
-                    DiagnosticsStore.recordSplashScan(
-                        prefs.learningTargetPackage,
-                        "learning: click source unavailable",
-                        null
-                    )
-                    return
-                }
                 popupController.onViewClicked(
                     packageName = prefs.learningTargetPackage,
-                    source = source,
+                    source = event.source,
                     activityClass = lastForegroundActivityClass,
                     windowBounds = currentWindowBounds()
                 )
@@ -211,26 +220,36 @@ class SkipAccessibilityService : AccessibilityService() {
 
     private fun resolveEventPackage(event: AccessibilityEvent): String? {
         val eventPackage = event.packageName?.toString()
-        val rootPackage = rootInActiveWindow?.packageName?.toString()
+        if (eventPackage != null) {
+            if (NodeScanner.SYSTEM_AD_PACKAGES.contains(eventPackage)) {
+                controller.targetPackageName?.let { return it }
+                popupController.targetPackageName?.let { return it }
+            }
+            if (prefs.isTarget(eventPackage) || eventPackage == this.packageName) {
+                return eventPackage
+            }
+        }
 
-        if (eventPackage != null && NodeScanner.SYSTEM_AD_PACKAGES.contains(eventPackage)) {
-            controller.targetPackageName?.let { return it }
-            popupController.targetPackageName?.let { return it }
-        }
-        if (eventPackage != null && (prefs.isTarget(eventPackage) || eventPackage == packageName)) {
-            return eventPackage
-        }
+        val rootPackage = rootInActiveWindow?.packageName?.toString()
         if (rootPackage != null && NodeScanner.SYSTEM_AD_PACKAGES.contains(rootPackage)) {
             controller.targetPackageName?.let { return it }
             popupController.targetPackageName?.let { return it }
         }
-        if (rootPackage != null && (prefs.isTarget(rootPackage) || rootPackage == packageName)) {
+        if (rootPackage != null && (prefs.isTarget(rootPackage) || rootPackage == this.packageName)) {
             return rootPackage
         }
         return eventPackage ?: rootPackage ?: lastForegroundPackage
     }
 
     private fun recordDiagnostics(packageName: String, eventType: Int, className: String) {
+        val now = SystemClock.uptimeMillis()
+        if (eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED &&
+            now - lastDiagnosticsDetailAt < DIAGNOSTICS_DETAIL_INTERVAL_MS
+        ) {
+            DiagnosticsStore.recordEventSummary(packageName, eventType, className)
+            return
+        }
+        lastDiagnosticsDetailAt = now
         val rootPackage = rootInActiveWindow?.packageName?.toString().orEmpty()
         val windowList = windows
         val windowPackages = windowList
@@ -287,7 +306,6 @@ class SkipAccessibilityService : AccessibilityService() {
         if (::controller.isInitialized) controller.cancel()
         if (::popupController.isInitialized) popupController.cancel()
         DiagnosticsStore.serviceConnected = false
-        DiagnosticsStore.serviceConnectedAt = 0L
         super.onDestroy()
     }
 
@@ -316,9 +334,9 @@ class SkipAccessibilityService : AccessibilityService() {
     private fun finishLearningSession() {
         val count = prefs.learningSavedCount
         learningHandler.removeCallbacks(learningArmRunnable)
+        learningHandler.removeCallbacks(learningFinishRunnable)
         learningArmPackage = null
         prefs.stopLearning()
-        DiagnosticsStore.clearLearning()
         val message = if (count > 0) {
             getString(R.string.learning_finished_format, count)
         } else {
@@ -327,17 +345,24 @@ class SkipAccessibilityService : AccessibilityService() {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
+    private fun scheduleLearningFinish() {
+        learningHandler.removeCallbacks(learningFinishRunnable)
+        learningHandler.postDelayed(learningFinishRunnable, LEARNING_FINISH_GRACE_MS)
+    }
+
     private fun refreshServiceInfo() {
         if (destroying || !::controller.isInitialized) return
         val sessionActive = controller.isRunning || popupController.isRunning
         val popupWatching = shouldWatchForegroundPopup()
-        val baseEvents = if (useAllEventsForOem) XIAOMI_BASE_EVENT_TYPES else BASE_EVENT_TYPES
+        val learningWatching = prefs.learningMode && prefs.learningTargetPackage.isNotBlank()
+        val baseEvents = BASE_EVENT_TYPES
         val eventTypes = when {
             sessionActive && useAllEventsForOem -> AccessibilityEvent.TYPES_ALL_MASK
-            sessionActive || popupWatching -> baseEvents or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+            sessionActive || popupWatching || learningWatching ->
+                baseEvents or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
             else -> baseEvents
         }
-        val flags = if (sessionActive) ACTIVE_FLAGS else BASE_FLAGS
+        val flags = if (sessionActive || learningWatching) ACTIVE_FLAGS else BASE_FLAGS
         if (eventTypes == lastEventTypes && flags == lastFlags) return
         val info = serviceInfo ?: return
         info.eventTypes = eventTypes
@@ -352,19 +377,18 @@ class SkipAccessibilityService : AccessibilityService() {
         const val NOTIFICATION_TIMEOUT_MS = 100L
         const val ACTIVE_NOTIFICATION_TIMEOUT_MS = 50L
         const val LEARNING_ARM_FALLBACK_MS = 3_000L
+        const val LEARNING_FINISH_GRACE_MS = 1_500L
+        const val DIAGNOSTICS_DETAIL_INTERVAL_MS = 300L
 
         val BASE_EVENT_TYPES = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
             AccessibilityEvent.TYPE_WINDOWS_CHANGED or
             AccessibilityEvent.TYPE_VIEW_CLICKED
 
-        val XIAOMI_BASE_EVENT_TYPES = BASE_EVENT_TYPES or
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-
-        const val BASE_FLAGS = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-            AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-            AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY
+        const val BASE_FLAGS = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
 
         const val ACTIVE_FLAGS = BASE_FLAGS or
+            AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+            AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY or
             AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
     }
 }

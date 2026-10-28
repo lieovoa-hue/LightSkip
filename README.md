@@ -13,7 +13,9 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 规则导入：从剪贴板导入李跳跳 `AllRules.json` 或单个 App 的 `popup_rules`。
 - 小米 / Redmi：增加 HyperOS/MIUI 事件与窗口兼容层。
 - 诊断与反馈：事件链路、扫描结果、点击结果、HarmonyOS/EMUI 信息和一键分享。
+- 后台状态：区分 Android 电池白名单、厂商后台限制、AppOps 和待机分组，避免误报“受限”。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
+- 轻量低功耗：空闲只订阅状态、窗口和点击事件；完整窗口与内容事件仅在短会话或学习时开启。
 
 ### v0.3.1 志愿汇修复
 
@@ -23,7 +25,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 诊断新增 `last splash scan` / `last splash candidate`。
 - 实测志愿汇：`skip_count 18 → 19`，诊断记录 `ACTION_CLICK 4S | 跳过`，随后进入 MainActivity。
 
-### v0.3.2 学习模式修复
+### v0.3.2 学习模式与低功耗收尾
 
 - 移除“必须先跳过开屏/必须先武装”的隐藏门槛；选择 App 后即可记录。
 - 广告 SDK 或独立窗口的点击也按“用户选中的目标 App”保存。
@@ -32,6 +34,11 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 实测不等待开屏直接点击测试弹窗 X：`learning_saved_count=1`，规则成功写入。
 - 内容防抖 240ms → 60ms，活动通知间隔 100ms → 50ms，最小扫描间隔 250ms → 120ms。
 - 离开 App 后重开绕过同包冷却；快速重开测试 `38 → 39 → 40`，第二次未被挡住。
+- 修正服务关闭时点击守护卡片/开关会反复跳系统设置的问题；现在只提示，不强制跳转。
+- 修正已允许厂商“后台高耗电”却仍显示“受限”的问题；未进白名单但系统未限制时显示“未受限”。
+- 清理旧检测窗口、震动、关闭广告、统计开关等无入口字段，以及 61 个未使用资源。
+- 空闲无障碍标志缩减为 `flagReportViewIds`；窗口细节读取只保留在短会话内。
+- 高频 `TYPE_WINDOWS_CHANGED` 诊断详情按 300ms 采样，保留结论但减少重复窗口树读取。
 
 ## 规则导入
 
@@ -85,8 +92,8 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 本机构建实测：
 
-- Release APK：`140,673` 字节，约 `137 KB`
-- Debug APK：`1,074,282` 字节，约 `1.05 MB`
+- Release APK：`142,589` 字节，约 `139 KB`
+- Debug APK：`1,055,595` 字节，约 `1.01 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -144,7 +151,7 @@ adb logcat -d | findstr /i "lightskip Accessibility"
 针对 HyperOS/MIUI 增加：
 
 - 短会话期间使用全事件类型；
-- 空闲时也保留内容事件用于前台包名兜底；
+- 空闲时收缩为状态、窗口和点击事件，完整内容事件只在短会话内开启；
 - 同时判断 `event.packageName` 与 `rootInActiveWindow.packageName`；
 - 允许扫描 MIUI 系统广告窗口包；
 - Android 12+ 无障碍配置声明 `isAccessibilityTool`；
@@ -157,8 +164,10 @@ adb logcat -d | findstr /i "lightskip Accessibility"
 - 没有规则、没有会话、没有目标前台时，处理很快返回。
 - 有规则的 App 前台时，内容事件用于延迟弹窗检测。
 - 弹窗内容探针最多每 2 秒一次，每次最多 2 次扫描。
-- 开屏兼容模式最多 8 次扫描；只扫描目标 App 与 MIUI 系统广告窗口。
+- 空闲无障碍标志仅保留 `flagReportViewIds`，不读取非重要视图和 WebView 增强节点。
+- 开屏兼容模式扫描计划最多 8 次、点击尝试最多 5 次；只扫描目标 App 与 MIUI 系统广告窗口。
 - 节点上限 400、深度 14。
+- 诊断窗口详情按 300ms 采样，避免同一次启动重复读取窗口树。
 - 无轮询、无 WakeLock、无开机广播、无前台常驻服务。
 
 MEIZU 21 / Android 16 实测：
@@ -166,16 +175,19 @@ MEIZU 21 / Android 16 实测：
 - 连续两次开屏跳过成功；
 - AllRules 剪贴板导入成功；
 - 2 秒后出现的同一 Activity 弹窗自动关闭成功；
-- 志愿汇开屏连续重开测试成功：`skip_count 18 → 19`，识别到 `4S | 跳过`；
-- 学习模式直接点击 X：`learning_saved_count=1`，规则写入成功；
-- 快速关闭再打开测试开屏：连续两次均跳过，`38 → 39 → 40`；
+- 志愿汇真实开屏跳过成功：`skip_count 5 → 6`；
+- 学习模式连续点击两个 X：`learning_saved_count=2`，两条规则均写入；
+- 已学习弹窗自动关闭成功，跳过计数 `+1`；
+- 连续快速打开测试开屏 3 次：`skip_count 2 → 5`；
+- 服务关闭时点击首页卡片/开关，页面保持 MainActivity，不跳系统设置；
+- MEIZU 21 已允许“后台高耗电”但未加入 Doze 白名单：首页正确显示“未受限”；
 - 空闲 CPU 采样 `0%`；
-- 后台 PSS 约 `44–57 MB`；
+- Release 服务空闲 PSS 约 `23 MB`（`23,316 KB`）；
 - 会话结束后事件类型收缩回低频集合。
 
 ## 安装与使用
 
-1. 安装 `dist/LightSkip-0.3.apk`。
+1. 安装 `dist/LightSkip-0.3.2.apk`。
 2. 打开轻跳，进入系统无障碍设置开启服务。
 3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
 4. 在应用页选择守护 App。
@@ -220,6 +232,9 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
 - `dist/LightSkip-0.3.2.apk`
+
+验证结果：`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
+`0 errors / 104 warnings / 0 unused resources`。
 
 ## 已知限制
 

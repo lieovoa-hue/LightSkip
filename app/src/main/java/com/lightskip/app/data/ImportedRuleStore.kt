@@ -111,12 +111,6 @@ class ImportedRuleStore(context: Context) {
         key.startsWith(KEY_PREFIX) && !sp.getString(key, null).isNullOrBlank()
     }
 
-    fun clearAll() {
-        val editor = sp.edit()
-        sp.all.keys.filter { it.startsWith(KEY_PREFIX) }.forEach(editor::remove)
-        editor.apply()
-    }
-
     private fun parseRuleValue(value: Any): List<PopupRule> {
         return when (value) {
             is String -> runCatching {

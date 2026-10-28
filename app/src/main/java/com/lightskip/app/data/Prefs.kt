@@ -18,14 +18,6 @@ class Prefs(context: Context) {
             sp.edit().putStringSet(KEY_TARGETS, copy).apply()
         }
 
-    var detectionWindowMs: Long
-        get() = sp.getLong(KEY_WINDOW, 6_000L).coerceIn(2_000L, 15_000L)
-        set(value) = sp.edit().putLong(KEY_WINDOW, value.coerceIn(2_000L, 15_000L)).apply()
-
-    var maxAttempts: Int
-        get() = sp.getInt(KEY_ATTEMPTS, 3).coerceIn(1, 8)
-        set(value) = sp.edit().putInt(KEY_ATTEMPTS, value.coerceIn(1, 8)).apply()
-
     var compatibilityMode: Boolean
         get() = sp.getBoolean(KEY_COMPAT, true)
         set(value) = sp.edit().putBoolean(KEY_COMPAT, value).apply()
@@ -50,18 +42,6 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_LEARNING_COUNT, 0).coerceIn(0, RuleLearningStore.MAX_RULES)
         set(value) = sp.edit().putInt(KEY_LEARNING_COUNT, value.coerceIn(0, RuleLearningStore.MAX_RULES)).apply()
 
-    var closeAdEnabled: Boolean
-        get() = sp.getBoolean(KEY_CLOSE_AD, false)
-        set(value) = sp.edit().putBoolean(KEY_CLOSE_AD, value).apply()
-
-    var vibrateEnabled: Boolean
-        get() = sp.getBoolean(KEY_VIBRATE, false)
-        set(value) = sp.edit().putBoolean(KEY_VIBRATE, value).apply()
-
-    var statsEnabled: Boolean
-        get() = sp.getBoolean(KEY_STATS, true)
-        set(value) = sp.edit().putBoolean(KEY_STATS, value).apply()
-
     var onboardingDone: Boolean
         get() = sp.getBoolean(KEY_ONBOARDING, false)
         set(value) = sp.edit().putBoolean(KEY_ONBOARDING, value).apply()
@@ -71,10 +51,10 @@ class Prefs(context: Context) {
         set(value) = sp.edit().putBoolean(KEY_CHOSEN_APPS, value).apply()
 
     val effectiveWindowMs: Long
-        get() = if (compatibilityMode) 10_000L else detectionWindowMs
+        get() = if (compatibilityMode) 10_000L else 6_000L
 
     val effectiveMaxAttempts: Int
-        get() = if (compatibilityMode) 5 else maxAttempts
+        get() = if (compatibilityMode) 5 else 3
 
     fun isTarget(packageName: String): Boolean = cachedTargets().contains(packageName)
 
@@ -119,17 +99,12 @@ class Prefs(context: Context) {
 
         const val KEY_MASTER = "master_enabled"
         const val KEY_TARGETS = "target_packages"
-        const val KEY_WINDOW = "detection_window_ms"
-        const val KEY_ATTEMPTS = "max_attempts"
         const val KEY_COMPAT = "compatibility_mode"
         const val KEY_POPUP = "popup_mode"
         const val KEY_LEARNING = "learning_mode"
         const val KEY_LEARNING_TARGET = "learning_target_package"
         const val KEY_LEARNING_ARMED = "learning_armed"
         const val KEY_LEARNING_COUNT = "learning_saved_count"
-        const val KEY_CLOSE_AD = "close_ad_enabled"
-        const val KEY_VIBRATE = "vibrate_enabled"
-        const val KEY_STATS = "stats_enabled"
         const val KEY_ONBOARDING = "onboarding_done"
         const val KEY_CHOSEN_APPS = "has_chosen_apps"
     }

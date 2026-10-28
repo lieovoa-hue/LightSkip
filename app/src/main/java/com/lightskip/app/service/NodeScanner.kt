@@ -39,7 +39,6 @@ class NodeScanner(private val rules: RuleEngine = RuleEngine) {
     fun findSplash(
         roots: List<AccessibilityNodeInfo>,
         targetPackage: String,
-        closeAdEnabled: Boolean,
         screenWidth: Int,
         screenHeight: Int,
         scanPackages: Set<String> = allowedPackages(targetPackage)
@@ -52,8 +51,7 @@ class NodeScanner(private val rules: RuleEngine = RuleEngine) {
             val signal = rules.hasSplashSignal(
                 raw = if (text.isNotBlank()) text else desc,
                 viewId = viewId,
-                contentDescription = desc,
-                closeAdEnabled = closeAdEnabled
+                contentDescription = desc
             )
             if (!signal) {
                 return@walk false
@@ -67,8 +65,7 @@ class NodeScanner(private val rules: RuleEngine = RuleEngine) {
                 bounds = bounds,
                 screenWidth = screenWidth,
                 screenHeight = screenHeight,
-                clickable = clickable != null,
-                closeAdEnabled = closeAdEnabled
+                clickable = clickable != null
             )
             if (score > (best?.score ?: 0)) {
                 best = Candidate(

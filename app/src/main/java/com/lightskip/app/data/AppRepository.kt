@@ -50,13 +50,6 @@ class AppRepository(private val context: Context) {
             .toSet()
     }
 
-    fun entryFor(packageName: String): AppEntry? = load().firstOrNull { it.packageName == packageName }
-
-    fun labelFor(packageName: String): String =
-        entryFor(packageName)?.label ?: packageName.substringAfterLast('.').ifBlank { packageName }
-
-    fun colorFor(packageName: String): Int = entryFor(packageName)?.color ?: colorForPackage(packageName)
-
     companion object {
         private val PALETTE = intArrayOf(
             0xFFE8583B.toInt(),

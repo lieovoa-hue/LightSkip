@@ -15,8 +15,7 @@ class SkipSessionController(
     private val service: AccessibilityService,
     private val prefs: Prefs,
     private val scanner: NodeScanner,
-    private val onSessionStarted: () -> Unit,
-    private val onSkipped: (packageName: String, responseMs: Long) -> Unit,
+    private val onSkipped: (packageName: String) -> Unit,
     private val onActiveChanged: () -> Unit
 ) {
 
@@ -90,8 +89,6 @@ class SkipSessionController(
         lastSignature = null
 
         onActiveChanged()
-        onSessionStarted()
-
         handler.postDelayed(Runnable { finish() }, prefs.effectiveWindowMs + 60L)
         handler.postDelayed(scanRunnable, 120L)
         handler.postDelayed(scanRunnable, 500L)
@@ -135,7 +132,6 @@ class SkipSessionController(
         val candidate = scanner.findSplash(
             roots = roots,
             targetPackage = target,
-            closeAdEnabled = prefs.closeAdEnabled,
             screenWidth = metrics.widthPixels,
             screenHeight = metrics.heightPixels
         )
@@ -179,7 +175,7 @@ class SkipSessionController(
             }
             if (adContainerSeen && fallbackTaps > 0) {
                 DiagnosticsStore.recordClick(target, true, "splash fallback closed")
-                onSkipped(target, now - startedAt)
+                onSkipped(target)
                 finish()
                 return
             }
@@ -199,7 +195,7 @@ class SkipSessionController(
         val clicked = clickNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         if (clicked) {
             DiagnosticsStore.recordClick(target, true, "ACTION_CLICK " + candidate.text.take(24))
-            onSkipped(target, now - startedAt)
+            onSkipped(target)
             finish()
             return
         }
@@ -213,7 +209,7 @@ class SkipSessionController(
                 .build()
             if (service.dispatchGesture(gesture, null, null)) {
                 DiagnosticsStore.recordClick(target, true, "gesture")
-                onSkipped(target, now - startedAt)
+                onSkipped(target)
                 finish()
                 return
             }

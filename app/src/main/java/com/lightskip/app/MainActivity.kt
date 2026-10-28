@@ -9,7 +9,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.os.PowerManager
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -29,6 +30,7 @@ import com.lightskip.app.service.DiagnosticsStore
 import com.lightskip.app.ui.AppListAdapter
 import com.lightskip.app.ui.ToggleView
 import com.lightskip.app.util.AccessibilityUtils
+import com.lightskip.app.util.BackgroundStatusUtils
 import com.lightskip.app.util.SystemBarUtils
 import com.lightskip.app.util.formatCount
 
@@ -47,11 +49,18 @@ class MainActivity : Activity() {
     private var appsFilter = Filter.ALL
     private var searchQuery = ""
     private var keepTaskOnStop = false
+    private val learningUiHandler = Handler(Looper.getMainLooper())
+    private val finishLearningUiRunnable = Runnable {
+        if (prefs.learningMode) {
+            finishLearningIfReturned()
+            refreshSettings()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
-        stats = LocalStats(this, prefs)
+        stats = LocalStats(this)
         stats.prune()
         repo = AppRepository(this)
         importedRules = ImportedRuleStore(this)
@@ -75,7 +84,10 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         keepTaskOnStop = false
-        finishLearningIfReturned()
+        if (prefs.learningMode) {
+            learningUiHandler.removeCallbacks(finishLearningUiRunnable)
+            learningUiHandler.postDelayed(finishLearningUiRunnable, 1_700L)
+        }
         refreshHome()
         refreshSettings()
         if (currentTab == Tab.APPS) refreshApps()
@@ -86,6 +98,11 @@ class MainActivity : Activity() {
         if (!keepTaskOnStop && !isChangingConfigurations && !isFinishing) {
             finishAndRemoveTask()
         }
+    }
+
+    override fun onDestroy() {
+        learningUiHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
     }
 
     @Deprecated("Deprecated in Java")
@@ -132,7 +149,7 @@ class MainActivity : Activity() {
 
         findViewById<View>(R.id.guard_card).setOnClickListener {
             if (!AccessibilityUtils.isServiceEnabled(this)) {
-                AccessibilityUtils.openAccessibilitySettings(this)
+                Toast.makeText(this, R.string.toast_service_needed, Toast.LENGTH_SHORT).show()
             }
         }
         findViewById<View>(R.id.check_accessibility).setOnClickListener {
@@ -151,7 +168,6 @@ class MainActivity : Activity() {
             Toast.makeText(this, R.string.toast_service_needed, Toast.LENGTH_SHORT).show()
             findViewById<ToggleView>(R.id.master_toggle).setChecked(false, animate = true)
             findViewById<ToggleView>(R.id.settings_toggle).setChecked(false, animate = true)
-            AccessibilityUtils.openAccessibilitySettings(this)
             return
         }
         prefs.masterEnabled = checked
@@ -192,15 +208,26 @@ class MainActivity : Activity() {
             else -> setStatus(accessibilityStatus, R.string.status_connected, R.color.forest_text)
         }
 
+        val background = BackgroundStatusUtils.read(this)
         val batteryStatus = findViewById<TextView>(R.id.check_background_status)
-        val unrestricted = runCatching {
-            val power = getSystemService(PowerManager::class.java)
-            power.isIgnoringBatteryOptimizations(packageName)
-        }.getOrDefault(false)
-        if (unrestricted) {
-            setStatus(batteryStatus, R.string.battery_unrestricted, R.color.forest_text)
-        } else {
-            setStatus(batteryStatus, R.string.battery_restricted, R.color.amber_text)
+        val batterySub = findViewById<TextView>(R.id.check_background_sub)
+        when (background.state) {
+            BackgroundStatusUtils.State.UNRESTRICTED -> {
+                setStatus(batteryStatus, R.string.battery_unrestricted, R.color.forest_text)
+                batterySub.setText(R.string.battery_unrestricted_sub)
+            }
+            BackgroundStatusUtils.State.ALLOWED -> {
+                setStatus(batteryStatus, R.string.battery_allowed, R.color.forest_text)
+                batterySub.setText(R.string.battery_allowed_sub)
+            }
+            BackgroundStatusUtils.State.RESTRICTED -> {
+                setStatus(batteryStatus, R.string.battery_restricted, R.color.amber_text)
+                batterySub.setText(R.string.battery_restricted_sub)
+            }
+            BackgroundStatusUtils.State.UNKNOWN -> {
+                setStatus(batteryStatus, R.string.battery_unknown, R.color.amber_text)
+                batterySub.setText(R.string.battery_unknown_sub)
+            }
         }
 
         val appsStatus = findViewById<TextView>(R.id.check_apps_status)
@@ -355,9 +382,6 @@ class MainActivity : Activity() {
     }
 
     private fun bindSettings() {
-        findViewById<View>(R.id.settings_status_card).setOnClickListener {
-            AccessibilityUtils.openAccessibilitySettings(this)
-        }
         findViewById<ToggleView>(R.id.settings_toggle).onCheckedChange = { handleMasterToggle(it) }
         findViewById<View>(R.id.row_accessibility).setOnClickListener {
             AccessibilityUtils.openAccessibilitySettings(this)
@@ -475,8 +499,13 @@ class MainActivity : Activity() {
 
     private fun onLearningClicked() {
         if (prefs.learningMode) {
+            learningUiHandler.removeCallbacks(finishLearningUiRunnable)
             finishLearningIfReturned()
             refreshSettings()
+            return
+        }
+        if (!AccessibilityUtils.isServiceEnabled(this) || !DiagnosticsStore.serviceConnected) {
+            Toast.makeText(this, R.string.learning_service_required, Toast.LENGTH_LONG).show()
             return
         }
 
@@ -497,7 +526,6 @@ class MainActivity : Activity() {
             .setItems(labels) { _, which ->
                 val (targetPackage, label) = entries[which]
                 prefs.startLearning(targetPackage)
-                DiagnosticsStore.clearLearning()
                 Toast.makeText(
                     this,
                     getString(R.string.learning_started_format, label),
@@ -542,7 +570,6 @@ class MainActivity : Activity() {
         if (!prefs.learningMode) return
         val count = prefs.learningSavedCount
         prefs.stopLearning()
-        DiagnosticsStore.clearLearning()
         val message = if (count > 0) {
             getString(R.string.learning_finished_format, count)
         } else {

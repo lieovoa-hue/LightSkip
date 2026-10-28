@@ -55,24 +55,18 @@ object RuleEngine {
 
     fun compact(raw: String): String = normalize(raw).replace(" ", "").lowercase(Locale.ROOT)
 
-    fun matchesSplash(raw: String, closeAdEnabled: Boolean): Boolean {
-        val text = compact(raw)
-        return matchesSplashText(text, closeAdEnabled)
-    }
-
     fun hasSplashSignal(
         raw: String,
         viewId: String,
-        contentDescription: String,
-        closeAdEnabled: Boolean
+        contentDescription: String
     ): Boolean {
         val text = compact(raw)
-        if (matchesSplashText(text, closeAdEnabled)) return true
+        if (matchesSplashText(text)) return true
         val id = viewId.lowercase(Locale.ROOT)
         if (skipIdHints.any { id.contains(it) }) return true
         val desc = compact(contentDescription)
         return desc.isNotEmpty() &&
-            (matchesSplashText(desc, closeAdEnabled) || skipIdHints.any { desc.contains(it) })
+            (matchesSplashText(desc) || skipIdHints.any { desc.contains(it) })
     }
 
     fun scoreSplash(
@@ -82,8 +76,7 @@ object RuleEngine {
         bounds: Rect,
         screenWidth: Int,
         screenHeight: Int,
-        clickable: Boolean,
-        closeAdEnabled: Boolean
+        clickable: Boolean
     ): Int {
         if (screenWidth <= 0 || screenHeight <= 0) return 0
         if (bounds.width() < 24 || bounds.height() < 18) return 0
@@ -92,14 +85,15 @@ object RuleEngine {
         val text = compact(raw)
         val id = viewId.lowercase(Locale.ROOT)
         val desc = compact(contentDescription)
-        val textHit = matchesSplashText(text, closeAdEnabled)
+        val textHit = matchesSplashText(text)
         val idHit = skipIdHints.any { id.contains(it) }
-        val descHit = desc.isNotEmpty() && (matchesSplashText(desc, closeAdEnabled) || skipIdHints.any { desc.contains(it) })
+        val descHit = desc.isNotEmpty() && (matchesSplashText(desc) || skipIdHints.any { desc.contains(it) })
         if (!textHit && !idHit && !descHit) return 0
 
         var score = when {
             textHit && text == "跳过" -> 120
-            textHit && text == "关闭广告" -> 100
+            textHit && text in setOf("关闭广告", "关闭") -> 100
+            textHit && text in setOf("×", "x") -> 85
             textHit && text.startsWith("跳过") -> 100
             textHit && text.endsWith("跳过") -> 90
             idHit -> 90
@@ -162,17 +156,15 @@ object RuleEngine {
         return score
     }
 
-    fun popupThreshold(mode: String): Int = if (mode == "STRICT") 110 else 70
-
     fun isStrongCloseId(viewId: String): Boolean {
         val id = viewId.lowercase(Locale.ROOT)
         return closeIdHints.any { id.contains(it) }
     }
 
-    private fun matchesSplashText(text: String, closeAdEnabled: Boolean): Boolean {
+    private fun matchesSplashText(text: String): Boolean {
         if (text.isEmpty() || text.length > 10) return false
         if (rejectedFragments.any { text.contains(it) }) return false
-        if (text == "关闭广告") return closeAdEnabled
+        if (text in setOf("关闭广告", "关闭", "×", "x")) return true
         return skipPatterns.any { it.matches(text) }
     }
 }

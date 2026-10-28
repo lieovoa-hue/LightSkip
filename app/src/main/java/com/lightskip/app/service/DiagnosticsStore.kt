@@ -7,6 +7,7 @@ import android.view.accessibility.AccessibilityEvent
 import com.lightskip.app.data.ImportedRuleStore
 import com.lightskip.app.data.Prefs
 import com.lightskip.app.util.AccessibilityUtils
+import com.lightskip.app.util.BackgroundStatusUtils
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque
 import java.util.Date
@@ -50,12 +51,21 @@ object DiagnosticsStore {
     @Volatile var candidateCount: Int = 0
     @Volatile var clickSuccessCount: Int = 0
     @Volatile var clickFailCount: Int = 0
-    @Volatile var serviceConnectedAt: Long = 0L
-
     private val recent = ArrayDeque<String>()
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
-    private var learningPackageName: String = ""
-    private val learningItems = mutableListOf<PopupCandidate>()
+
+    @Synchronized
+    fun recordEventSummary(packageName: String, type: Int, className: String) {
+        eventCount++
+        when (type) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> stateEventCount++
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> windowEventCount++
+        }
+        lastEventAt = System.currentTimeMillis()
+        lastEventPackage = packageName
+        lastEventType = eventTypeName(type)
+        lastEventClass = className.take(80)
+    }
 
     @Synchronized
     fun recordEvent(
@@ -66,15 +76,7 @@ object DiagnosticsStore {
         rootPackage: String = "",
         windowPackages: String = ""
     ) {
-        eventCount++
-        when (type) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> stateEventCount++
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> windowEventCount++
-        }
-        lastEventAt = System.currentTimeMillis()
-        lastEventPackage = packageName
-        lastEventType = eventTypeName(type)
-        lastEventClass = className.take(80)
+        recordEventSummary(packageName, type, className)
         lastRootPackage = rootPackage.take(120)
         lastWindowPackages = windowPackages.take(240)
         val line = "${timeFormat.format(Date(lastEventAt))} ${eventTypeName(type)} $packageName " +
@@ -127,27 +129,6 @@ object DiagnosticsStore {
     }
 
     @Synchronized
-    fun setLearningCandidates(packageName: String, candidates: List<PopupCandidate>) {
-        learningPackageName = packageName
-        learningItems.clear()
-        learningItems.addAll(candidates.take(20).map {
-            it.copy(bounds = Rect(it.bounds), windowBounds = Rect(it.windowBounds))
-        })
-    }
-
-    @Synchronized
-    fun learningPackage(): String = learningPackageName
-
-    @Synchronized
-    fun learningCandidatesSnapshot(): List<PopupCandidate> = learningItems.toList()
-
-    @Synchronized
-    fun clearLearning() {
-        learningPackageName = ""
-        learningItems.clear()
-    }
-
-    @Synchronized
     fun format(context: Context, prefs: Prefs): String {
         val version = runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -166,6 +147,13 @@ object DiagnosticsStore {
         )
         builder.appendLine("accessibility setting: ${AccessibilityUtils.isServiceEnabled(context)}")
         builder.appendLine("service connected: $serviceConnected")
+        val background = BackgroundStatusUtils.read(context)
+        builder.appendLine(
+            "background: ${background.state.name} whitelisted=${background.batteryWhitelisted} " +
+                "restricted=${background.backgroundRestricted} " +
+                "runAny=${background.runAnyInBackgroundAllowed} " +
+                "bucket=${background.standbyBucket}"
+        )
         builder.appendLine("diagnosis: ${diagnose(prefs)}")
         builder.appendLine("compatibility: ${prefs.compatibilityMode}")
         builder.appendLine("popup mode: ${prefs.popupMode.name}")

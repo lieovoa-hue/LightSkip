@@ -12,7 +12,6 @@
     <color name="line">#263027</color>
     <color name="amber_soft">#3A2A16</color>
     <color name="amber_text">#F0B86E</color>
-    <color name="danger">#F08074</color>
     <color name="icon_tile">#202A22</color>
     <color name="segment_bg">#1F2821</color>
     <color name="switch_off">#3A463C</color>
@@ -26,5 +25,4 @@
     <color name="path_bg">#1D261F</color>
     <color name="ad_line">#44FFFFFF</color>
     <color name="dot_lime">#C9F65D</color>
-    <color name="demo_tag_bg">#24FFFFFF</color>
 </resources>

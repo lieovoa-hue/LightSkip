@@ -84,6 +84,18 @@ class RuleLearningStore(context: Context) {
         }.getOrDefault(emptyList())
     }
 
+    fun canLearn(
+        viewId: String,
+        contentDescription: String,
+        text: String,
+        bounds: Rect,
+        windowBounds: Rect
+    ): Boolean {
+        if (bounds.width() <= 0 || bounds.height() <= 0) return false
+        val window = usableWindow(bounds, windowBounds)
+        return isPlausibleCloseTarget(bounds, window, viewId, contentDescription, text)
+    }
+
     fun matches(candidate: DiagnosticsStore.PopupCandidate, rule: LearnedRule): Boolean {
         if (rule.regionOnly) return false
         if (rule.viewId.isNotBlank() && candidate.viewId == rule.viewId) return true
@@ -111,10 +123,6 @@ class RuleLearningStore(context: Context) {
 
     fun clear(packageName: String) {
         sp.edit().remove(key(packageName)).apply()
-    }
-
-    fun clearAll() {
-        sp.edit().clear().putInt("schema_version", 1).apply()
     }
 
     private fun encode(rules: List<LearnedRule>): JSONArray {
