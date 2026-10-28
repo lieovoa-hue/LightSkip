@@ -6,4 +6,5 @@
     android:canPerformGestures="true"
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_description"
+    android:settingsActivity="com.lightskip.app.MainActivity"
     android:notificationTimeout="100" />

@@ -11,5 +11,14 @@
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.LightSkip" />
+        <activity
+            android:name=".DebugRuleTestActivity"
+            android:exported="true"
+            android:theme="@style/Theme.LightSkip" />
+        <activity
+            android:name=".DemoDelayedPopupActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.LightSkip" />
     </application>
 </manifest>

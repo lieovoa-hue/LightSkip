@@ -21,6 +21,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.lightskip.app.data.AppEntry
 import com.lightskip.app.data.AppRepository
+import com.lightskip.app.data.ImportedRuleStore
 import com.lightskip.app.data.LocalStats
 import com.lightskip.app.data.PopupMode
 import com.lightskip.app.data.Prefs
@@ -39,6 +40,7 @@ class MainActivity : Activity() {
     private lateinit var prefs: Prefs
     private lateinit var stats: LocalStats
     private lateinit var repo: AppRepository
+    private lateinit var importedRules: ImportedRuleStore
     private lateinit var appListAdapter: AppListAdapter
     private var allApps: List<AppEntry> = emptyList()
     private var currentTab = Tab.HOME
@@ -52,6 +54,7 @@ class MainActivity : Activity() {
         stats = LocalStats(this, prefs)
         stats.prune()
         repo = AppRepository(this)
+        importedRules = ImportedRuleStore(this)
 
         if (!prefs.onboardingDone) {
             startActivity(Intent(this, OnboardingActivity::class.java))
@@ -366,6 +369,7 @@ class MainActivity : Activity() {
             refreshSettings()
         }
         findViewById<View>(R.id.row_popup).setOnClickListener { showPopupModeDialog() }
+        findViewById<View>(R.id.row_import_rules).setOnClickListener { importRulesFromClipboard() }
         findViewById<View>(R.id.row_learning).setOnClickListener { onLearningClicked() }
         findViewById<View>(R.id.row_diagnostics).setOnClickListener { showDiagnosticsDialog() }
         findViewById<View>(R.id.row_privacy).setOnClickListener {
@@ -418,6 +422,13 @@ class MainActivity : Activity() {
 
         findViewById<ToggleView>(R.id.toggle_compat).setChecked(prefs.compatibilityMode, animate = false)
         findViewById<TextView>(R.id.value_popup).setText(popupModeLabel(prefs.popupMode))
+        val importedCount = importedRules.importedAppCount()
+        findViewById<TextView>(R.id.value_import_rules).text =
+            if (importedCount > 0) {
+                getString(R.string.import_rules_count_format, importedCount)
+            } else {
+                getString(R.string.import_rules_value)
+            }
         val learningValue = findViewById<TextView>(R.id.value_learning)
         when {
             !prefs.learningMode -> {
@@ -540,6 +551,81 @@ class MainActivity : Activity() {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
+    private fun importRulesFromClipboard() {
+        val clipboard = getSystemService(ClipboardManager::class.java)
+        val raw = clipboard.primaryClip
+            ?.takeIf { it.itemCount > 0 }
+            ?.getItemAt(0)
+            ?.coerceToText(this)
+            ?.toString()
+            ?.trim()
+            .orEmpty()
+        if (raw.isEmpty()) {
+            Toast.makeText(this, R.string.import_rules_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val installedPackages = repo.load().map { it.packageName }.toSet()
+        val result = runCatching {
+            importedRules.importAllRules(raw, installedPackages)
+        }.getOrNull()
+        if (result != null) {
+            if (result.ruleCount > 0) {
+                val targets = prefs.targetPackages.toMutableSet()
+                targets.addAll(result.packages)
+                prefs.targetPackages = targets
+                prefs.popupMode = PopupMode.LEARNED
+                Toast.makeText(
+                    this,
+                    getString(R.string.import_rules_success_format, result.matchedApps, result.ruleCount),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.import_rules_none_format, result.unmatchedHashes),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            refreshHome()
+            refreshSettings()
+            return
+        }
+
+        chooseImportTarget(raw)
+    }
+
+    private fun chooseImportTarget(raw: String) {
+        val apps = repo.load()
+        if (apps.isEmpty()) {
+            Toast.makeText(this, R.string.import_rules_invalid, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = apps.map { it.label }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.import_rules_choose_app)
+            .setItems(labels) { _, which ->
+                val entry = apps[which]
+                val count = runCatching {
+                    importedRules.importForPackage(entry.packageName, raw)
+                }.getOrNull() ?: run {
+                    Toast.makeText(this, R.string.import_rules_invalid, Toast.LENGTH_LONG).show()
+                    return@setItems
+                }
+                prefs.setTarget(entry.packageName, true)
+                prefs.popupMode = PopupMode.LEARNED
+                Toast.makeText(
+                    this,
+                    getString(R.string.import_rules_single_success_format, entry.label, count),
+                    Toast.LENGTH_LONG
+                ).show()
+                refreshHome()
+                refreshSettings()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
 
     private fun showBackgroundDialog() {
         AlertDialog.Builder(this)
@@ -558,6 +644,7 @@ class MainActivity : Activity() {
             .setTitle(R.string.diagnostics_title)
             .setMessage(text)
             .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.share_diagnostics) { _, _ -> shareDiagnostics(text) }
             .setPositiveButton(R.string.copy) { _, _ -> copyDiagnostics(text) }
             .show()
     }
@@ -566,6 +653,14 @@ class MainActivity : Activity() {
         val clipboard = getSystemService(ClipboardManager::class.java)
         clipboard.setPrimaryClip(ClipData.newPlainText("LightSkip diagnostics", text))
         Toast.makeText(this, R.string.diagnostics_copied, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun shareDiagnostics(text: String) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.share_diagnostics)))
     }
 
     private fun showInfoDialog(titleRes: Int, messageRes: Int) {

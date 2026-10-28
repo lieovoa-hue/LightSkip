@@ -25,6 +25,7 @@ class SkipSessionController(
 
     private var active = false
     val isRunning: Boolean get() = active
+    val targetPackageName: String? get() = targetPackage
 
     private var targetPackage: String? = null
     private var startedAt = 0L
@@ -167,7 +168,7 @@ class SkipSessionController(
         fun addRoot(root: AccessibilityNodeInfo?) {
             if (root == null) return
             val packageName = root.packageName?.toString()
-            if (packageName != null && packageName != target) return
+            if (!NodeScanner.isAllowedPackage(packageName, target)) return
             if (seenWindows.add(root.windowId)) result.add(root)
         }
 

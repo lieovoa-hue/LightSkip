@@ -320,6 +320,64 @@
                 android:background="@color/row_divider" />
 
             <LinearLayout
+                android:id="@+id/row_import_rules"
+                style="@style/SettingsRow"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    style="@style/IconTile"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_info" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/import_rules_title"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        style="@style/Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/import_rules_sub"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/value_import_rules"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/import_rules_value"
+                    android:textColor="@color/forest_text"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right"
+                    android:tint="@color/nav_inactive" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/row_divider" />
+
+            <LinearLayout
                 android:id="@+id/row_learning"
                 style="@style/SettingsRow"
                 android:background="?android:attr/selectableItemBackground"
