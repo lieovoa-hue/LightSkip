@@ -11,6 +11,8 @@
     <string name="check_accessibility">无障碍服务</string>
     <string name="check_accessibility_sub">系统设置中开启</string>
     <string name="check_accessibility_unconnected_sub">已开启但未连接，点此重新开关</string>
+    <string name="accessibility_settings_confirm_title">打开系统无障碍设置？</string>
+    <string name="accessibility_settings_confirm_body">只有在你确认后，轻跳才会打开系统设置，用于开启或关闭轻跳的无障碍服务。\n\n如果只是想暂停跳广告，直接使用应用内的守护开关即可。</string>
     <string name="check_background">后台运行</string>
     <string name="check_background_sub">按系统实际限制检测</string>
     <string name="check_apps">守护应用</string>
@@ -70,7 +72,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 多窗口</string>
-    <string name="version_line_02">轻跳 0.3.3 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.3.4 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>
@@ -125,7 +127,7 @@
     <string name="apps_count_format">%d 个应用</string>
     <string name="home_privacy">不读取输入框 · 不保存画面 · 无网络权限</string>
 
-    <string name="beta_version">v0.3.3</string>
+    <string name="beta_version">v0.3.4</string>
     <string name="skip_label">跳过</string>
     <string name="check_done">已自动跳过</string>
     <string name="ad_tag">AD</string>
@@ -135,7 +137,7 @@
     <string name="settings_status_sub_paused">轻跳已连接，当前暂停识别</string>
     <string name="toast_demo_missing">测试页不可用</string>    <string name="apps_scope">守护范围</string>
     <string name="apps_summary_zero">0 个已启用 · 0 个已排除</string>
-    <string name="version_short">轻跳 0.3.3</string>    <string name="apps_page_title">选择要守护的应用</string>
+    <string name="version_short">轻跳 0.3.4</string>    <string name="apps_page_title">选择要守护的应用</string>
     <string name="apps_summary_format">%1$d 个已启用 · %2$d 个已排除</string>
     <string name="filter_count_format">%1$s %2$d</string>
     <string name="filter_all">全部</string>

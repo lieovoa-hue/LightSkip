@@ -191,6 +191,9 @@ object DiagnosticsStore {
         }
         if (prefs.targetPackages.isEmpty()) return "未选择守护应用"
         if (scanCount == 0) return "收到事件，但未进入目标 App 扫描（前台包名识别失败或未打开目标）"
+        if (lastSplashScanNote.startsWith("no candidate roots=0")) {
+            return "扫描时未获取到目标应用窗口（MIUI/HyperOS 可能隔离了窗口树）"
+        }
         if (candidateCount == 0) return "已扫描但未识别到候选（广告没有可读文本/ID，或被系统窗口隔离）"
         if (clickFailCount > 0 && clickSuccessCount == 0) return "识别到候选但点击/手势失败（系统限制）"
         return "未发现明确故障，请附上最近事件和窗口包名"

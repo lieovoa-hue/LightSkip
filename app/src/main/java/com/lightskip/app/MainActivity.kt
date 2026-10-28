@@ -159,7 +159,7 @@ class MainActivity : Activity() {
             }
         }
         findViewById<View>(R.id.check_accessibility).setOnClickListener {
-            AccessibilityUtils.openAccessibilitySettings(this)
+            confirmOpenAccessibilitySettings()
         }
         findViewById<View>(R.id.check_background).setOnClickListener {
             showBackgroundDialog()
@@ -390,7 +390,7 @@ class MainActivity : Activity() {
     private fun bindSettings() {
         findViewById<ToggleView>(R.id.settings_toggle).onCheckedChange = { handleMasterToggle(it) }
         findViewById<View>(R.id.row_accessibility).setOnClickListener {
-            AccessibilityUtils.openAccessibilitySettings(this)
+            confirmOpenAccessibilitySettings()
         }
         findViewById<View>(R.id.row_background).setOnClickListener { showBackgroundDialog() }
         findViewById<ToggleView>(R.id.toggle_hide_task).onCheckedChange = { enabled ->
@@ -690,6 +690,17 @@ class MainActivity : Activity() {
             .setNegativeButton(R.string.later, null)
             .setPositiveButton(R.string.background_open_settings) { _, _ ->
                 AccessibilityUtils.openBatteryOptimizationSettings(this)
+            }
+            .show()
+    }
+
+    private fun confirmOpenAccessibilitySettings() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.accessibility_settings_confirm_title)
+            .setMessage(R.string.accessibility_settings_confirm_body)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.go_settings) { _, _ ->
+                AccessibilityUtils.openAccessibilitySettings(this)
             }
             .show()
     }

@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.4 - 2026-10-28
+
+### 修复
+
+- 点击底部「设置」只切换应用内页面，不会打开系统无障碍设置。
+- 首页和设置页的无障碍入口改为确认对话框；取消后停留在轻跳。
+- 确认框明确提示只有确认后才会打开系统设置，避免误触和误判为自动跳转。
+
+### 诊断增强
+
+- 开屏扫描记录新增 `roots=N [包名]`。
+- `diagnosis` 可区分“没有拿到目标窗口树”和“拿到窗口但没有跳过候选”。
+- 对 `no candidate roots=0` 增加 MIUI/HyperOS 窗口隔离提示。
+
+### 验证
+
+- MEIZU 21：点击底部「设置」停留 MainActivity。
+- MEIZU 21：点击无障碍入口先显示确认框；取消后停留 MainActivity。
+- MEIZU 21：安装包版本 `0.3.4` / versionCode `7`。
+- `assembleDebug`、`assembleRelease`、`lintDebug` 通过。
+- Lint：`0 errors / 105 warnings / 0 unused resources`。
+
+### 关于 Redmi/HyperOS 日志
+
+- 日志设备 `Xiaomi Redmi 25060RK16C / dali` 为 HyperOS/Android 16，不是 HarmonyOS。
+- 服务已连接且后台无限制；QQ 音乐前台时 root 仍为 `com.miui.home`、窗口为空，属于窗口树不可见/时机问题。
+- 该问题不是后台冻结；需要升级后重新采集 `roots` 诊断，不能仅凭 0.3.2 日志判断为鸿蒙故障。
+
 ## v0.3.3 - 2026-10-28
 
 ### 新增

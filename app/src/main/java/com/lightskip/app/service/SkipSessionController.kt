@@ -129,6 +129,8 @@ class SkipSessionController(
         val target = targetPackage ?: return
         val metrics = service.resources.displayMetrics
         val roots = roots()
+        val rootPackages = roots.mapNotNull { it.packageName?.toString() }.distinct()
+        val rootNote = "roots=${roots.size} [" + rootPackages.joinToString(",") + "]"
         val candidate = scanner.findSplash(
             roots = roots,
             targetPackage = target,
@@ -163,11 +165,15 @@ class SkipSessionController(
                     if (tapAt(point, target, "splash position fallback")) {
                         fallbackTaps++
                         lastFallbackTapAt = now
-                        DiagnosticsStore.recordSplashScan(target, "ad container fallback", null)
+                        DiagnosticsStore.recordSplashScan(
+                            target,
+                            "ad container fallback $rootNote",
+                            null
+                        )
                         return
                     }
                 }
-                DiagnosticsStore.recordSplashScan(target, "ad container waiting", null)
+                DiagnosticsStore.recordSplashScan(target, "ad container waiting $rootNote", null)
                 if (fallbackTaps >= FALLBACK_MAX_TAPS && elapsed > FALLBACK_WINDOW_MS) {
                     finish()
                 }
@@ -179,7 +185,7 @@ class SkipSessionController(
                 finish()
                 return
             }
-            DiagnosticsStore.recordSplashScan(target, "no candidate", null)
+            DiagnosticsStore.recordSplashScan(target, "no candidate $rootNote", null)
             return
         }
 

@@ -4,7 +4,7 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.3.3 能力
+## v0.3.4 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行手动学习规则或导入的李跳跳规则。
@@ -16,6 +16,15 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 后台状态：区分 Android 电池白名单、厂商后台限制、AppOps 和待机分组，避免误报“受限”。
 - 无网络、无广告 SDK、无截图、无 OCR、无前台常驻服务。
 - 轻量低功耗：空闲只订阅状态、窗口和点击事件；完整窗口与内容事件仅在短会话或学习时开启。
+
+### v0.3.4 系统设置确认与诊断增强
+
+- 点击底部「设置」只切页，不会打开系统无障碍设置。
+- 首页/设置页的「无障碍服务」入口改为先弹确认框；取消后停留在轻跳。
+- 确认框明确说明：只有用户确认后才会打开系统页面。
+- 开屏扫描诊断新增 `roots=N [包名]`，可区分“没有窗口树”和“有窗口但没有跳过候选”。
+- `diagnosis` 在 `no candidate roots=0` 时会提示 MIUI/HyperOS 窗口树被隔离。
+- MEIZU 21 实测：设置页切换不跳转；无障碍入口先显示确认框，取消后仍在 MainActivity。
 
 ### v0.3.3 后台任务开关与鸿蒙兼容
 
@@ -93,17 +102,17 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 ## 下载
 
-- v0.3.3 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.3
-- Release APK：`dist/LightSkip-0.3.3.apk`
+- v0.3.4 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.4
+- Release APK：`dist/LightSkip-0.3.4.apk`
 - 带测试开屏、双 X 弹窗、延迟弹窗和规则测试入口的 Debug APK：
-  `dist/LightSkip-0.3.3-debug-with-demo.apk`
+  `dist/LightSkip-0.3.4-debug-with-demo.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`143,877` 字节，约 `140 KB`
-- Debug APK：`1,048,259` 字节，约 `1.00 MB`
+- Release APK：`144,429` 字节，约 `141 KB`
+- Debug APK：`1,073,478` 字节，约 `1.02 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -203,13 +212,14 @@ MEIZU 21 / Android 16 实测：
 - 「隐藏后台任务」关闭时：离开应用后最近任务仍在，无障碍服务保持连接；
 - 「隐藏后台任务」开启时：离开应用后任务从最近任务移除，无障碍服务保持连接；
 - 保留最近任务时连续打开测试开屏 2 次，跳过计数 `22 → 24`；
+- 点击底部「设置」停留在 MainActivity；点击无障碍入口先显示确认框，取消后不跳转；
 - 空闲 CPU 采样 `0%`；
 - Release 服务空闲 PSS 约 `25 MB`（`25,600 KB`）；
 - 会话结束后事件类型收缩回低频集合。
 
 ## 安装与使用
 
-1. 安装 `dist/LightSkip-0.3.3.apk`。
+1. 安装 `dist/LightSkip-0.3.4.apk`。
 2. 打开轻跳，进入系统无障碍设置开启服务。
 3. Android 13+ 如果提示「受限设置」，先在应用信息里允许受限设置。
 4. 在应用页选择守护 App。
@@ -253,7 +263,7 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.3.3.apk`
+- `dist/LightSkip-0.3.4.apk`
 
 验证结果：`assembleDebug`、`assembleRelease`、`lintDebug` 均通过；Lint
 `0 errors / 105 warnings / 0 unused resources`。
