@@ -16,7 +16,8 @@ object RuleEngine {
     )
 
     private val rejectedFragments = listOf(
-        "跳过此", "跳过介绍", "跳过引导", "跳过内容", "跳过设置", "跳过登录", "跳过教程"
+        "跳过此", "跳过介绍", "跳过引导", "跳过内容", "跳过设置", "跳过登录", "跳过教程",
+        "查看详情", "跳转第三方", "点击按钮", "立即购买", "下载应用", "打开应用", "了解更多"
     )
 
     private val skipIdHints = listOf(
@@ -65,10 +66,15 @@ object RuleEngine {
         contentDescription: String
     ): Boolean {
         val text = compact(raw)
+        val desc = compact(contentDescription)
+        if (rejectedFragments.any { text.contains(it) } ||
+            rejectedFragments.any { desc.contains(it) }
+        ) {
+            return false
+        }
         if (matchesSplashText(text)) return true
         val id = viewId.lowercase(Locale.ROOT)
         if (skipIdHints.any { id.contains(it) }) return true
-        val desc = compact(contentDescription)
         return desc.isNotEmpty() &&
             (matchesSplashText(desc) || skipIdHints.any { desc.contains(it) })
     }
