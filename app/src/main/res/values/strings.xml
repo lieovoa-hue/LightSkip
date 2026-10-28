@@ -34,10 +34,10 @@
     <string name="learning_started_format">正在打开 %1$s，跳过开屏后开始记录</string>
     <string name="learning_test_app">轻跳测试页（Debug）</string>
     <string name="learning_title">学习关闭按钮</string>
-    <string name="learning_sub">自动打开 App，跳过开屏后逐个点 X</string>
+    <string name="learning_sub">自动打开 App，点广告上的 X / 关闭 / 跳过</string>
     <string name="learning_off">未开启</string>
     <string name="learning_waiting">等待点按</string>
-    <string name="learning_waiting_splash">等待开屏</string>
+    <string name="learning_waiting_splash">可点击广告按钮</string>
     <string name="learning_captured_format">已记录 %1$d 个</string>
     <string name="learning_armed">开屏已跳过，开始记录弹窗关闭按钮</string>
     <string name="learning_wait_splash">请先让开屏广告跳过，再点弹窗上的 X</string>
@@ -47,7 +47,7 @@
     <string name="learning_rule_saved_format">已记录第 %1$d 个关闭按钮，可继续点下一个</string>
     <string name="learning_rule_duplicate">这个关闭按钮已经记录过了</string>
     <string name="learning_rule_limit">已记录 5 个关闭按钮，学习完成</string>
-    <string name="learning_invalid_close">请对准广告上的小关闭按钮再点一次</string>
+    <string name="learning_invalid_close">请点广告上的 X、关闭或跳过按钮，不要点整张广告</string>
     <string name="learning_finished_format">学习结束，本次记录 %1$d 个关闭按钮</string>
     <string name="learning_finished_none">学习结束，本次未记录规则</string>
     <string name="learning_launch_failed">无法自动打开该应用，请手动打开后重试</string>
@@ -71,7 +71,7 @@
     <string name="accessibility_service_sub">系统设置中开启</string>
     <string name="compatibility_mode">兼容模式</string>
     <string name="compatibility_mode_sub">10 秒 / 5 次 / 扫描所有窗口</string>
-    <string name="version_line_02">轻跳 0.3.1 · 完全本地 · 无广告 SDK</string>
+    <string name="version_line_02">轻跳 0.3.2 · 完全本地 · 无广告 SDK</string>
     <string name="brand_latin">LIGHT SKIP</string>
 
     <string name="onboarding_welcome_eyebrow">打开即进入</string>

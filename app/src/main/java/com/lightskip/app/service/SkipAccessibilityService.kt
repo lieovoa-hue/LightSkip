@@ -84,6 +84,7 @@ class SkipAccessibilityService : AccessibilityService() {
         DiagnosticsStore.noteAccessibilityEvent()
         val eventType = event.eventType
         val packageName = resolveEventPackage(event) ?: return
+        val foregroundChanged = lastForegroundPackage != packageName
         val className = event.className?.toString().orEmpty()
         val isOwnApp = packageName == this.packageName
         val isDemoSplash = BuildConfig.DEBUG &&
@@ -100,8 +101,7 @@ class SkipAccessibilityService : AccessibilityService() {
             (prefs.isTarget(packageName) || isDemoSplash || isDemoPopup)
         val learningClick = eventType == AccessibilityEvent.TYPE_VIEW_CLICKED &&
             prefs.learningMode &&
-            prefs.learningArmed &&
-            packageName == prefs.learningTargetPackage
+            prefs.learningTargetPackage.isNotBlank()
         if ((eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED ||
                 eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) &&
             lastForegroundPackage != packageName
@@ -109,7 +109,7 @@ class SkipAccessibilityService : AccessibilityService() {
             val previous = lastForegroundPackage
             lastForegroundPackage = packageName
             if (watched) {
-                controller.onForeground(packageName)
+                controller.onForeground(packageName, restartImmediately = true)
             } else if (previous != null) {
                 controller.cancel()
                 popupController.cancel()
@@ -144,14 +144,18 @@ class SkipAccessibilityService : AccessibilityService() {
                     scheduleLearningArm(packageName)
                 }
                 when {
-                    isDemoSplash -> controller.onForeground(packageName, bypassTargetCheck = true)
+                    isDemoSplash -> controller.onForeground(
+                        packageName,
+                        bypassTargetCheck = true,
+                        restartImmediately = foregroundChanged
+                    )
                     isDemoPopup -> popupController.onWindowEvent(
                         packageName,
                         lastForegroundActivityClass,
                         bypassTargetCheck = true
                     )
                     else -> {
-                        controller.onForeground(packageName)
+                        controller.onForeground(packageName, restartImmediately = foregroundChanged)
                         popupController.onWindowEvent(packageName, lastForegroundActivityClass)
                     }
                 }
@@ -186,9 +190,18 @@ class SkipAccessibilityService : AccessibilityService() {
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 if (!learningClick) return
                 recordDiagnostics(packageName, eventType, className)
+                val source = event.source
+                if (source == null) {
+                    DiagnosticsStore.recordSplashScan(
+                        prefs.learningTargetPackage,
+                        "learning: click source unavailable",
+                        null
+                    )
+                    return
+                }
                 popupController.onViewClicked(
-                    packageName = packageName,
-                    source = event.source,
+                    packageName = prefs.learningTargetPackage,
+                    source = source,
                     activityClass = lastForegroundActivityClass,
                     windowBounds = currentWindowBounds()
                 )
@@ -329,7 +342,7 @@ class SkipAccessibilityService : AccessibilityService() {
         val info = serviceInfo ?: return
         info.eventTypes = eventTypes
         info.flags = flags
-        info.notificationTimeout = NOTIFICATION_TIMEOUT_MS
+        info.notificationTimeout = if (sessionActive) ACTIVE_NOTIFICATION_TIMEOUT_MS else NOTIFICATION_TIMEOUT_MS
         serviceInfo = info
         lastEventTypes = eventTypes
         lastFlags = flags
@@ -337,6 +350,7 @@ class SkipAccessibilityService : AccessibilityService() {
 
     private companion object {
         const val NOTIFICATION_TIMEOUT_MS = 100L
+        const val ACTIVE_NOTIFICATION_TIMEOUT_MS = 50L
         const val LEARNING_ARM_FALLBACK_MS = 3_000L
 
         val BASE_EVENT_TYPES = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or

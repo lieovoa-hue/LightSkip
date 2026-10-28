@@ -47,7 +47,11 @@ class SkipSessionController(
     private var lastSignature: String? = null
     private var lastSignatureAt = 0L
 
-    fun onForeground(packageName: String, bypassTargetCheck: Boolean = false) {
+    fun onForeground(
+        packageName: String,
+        bypassTargetCheck: Boolean = false,
+        restartImmediately: Boolean = false
+    ) {
         if (!prefs.masterEnabled || (!bypassTargetCheck && !prefs.isTarget(packageName))) {
             cancel()
             return
@@ -55,7 +59,7 @@ class SkipSessionController(
         if (active && targetPackage == packageName) return
 
         val now = SystemClock.uptimeMillis()
-        if (packageName == lastEndedPackage && now - lastEndedAt < 500L) {
+        if (!restartImmediately && packageName == lastEndedPackage && now - lastEndedAt < 500L) {
             DiagnosticsStore.recordSplashScan(packageName, "session cooldown", null)
             return
         }
@@ -108,7 +112,15 @@ class SkipSessionController(
             return
         }
         if (contentTriggered && contentScanCount >= contentScanLimit) return
-        if (now - lastScanAt < MIN_SCAN_INTERVAL_MS) return
+        if (now - lastScanAt < MIN_SCAN_INTERVAL_MS) {
+            if (contentTriggered) {
+                handler.postDelayed(
+                    contentScanRunnable,
+                    MIN_SCAN_INTERVAL_MS - (now - lastScanAt)
+                )
+            }
+            return
+        }
         if (scanCount >= scanLimit) {
             finish()
             return
@@ -285,8 +297,8 @@ class SkipSessionController(
     }
 
     private companion object {
-        const val CONTENT_SCAN_DELAY_MS = 240L
-        const val MIN_SCAN_INTERVAL_MS = 250L
+        const val CONTENT_SCAN_DELAY_MS = 60L
+        const val MIN_SCAN_INTERVAL_MS = 120L
         const val FALLBACK_MIN_AGE_MS = 1_000L
         const val FALLBACK_WINDOW_MS = 6_500L
         const val FALLBACK_MAX_TAPS = 4

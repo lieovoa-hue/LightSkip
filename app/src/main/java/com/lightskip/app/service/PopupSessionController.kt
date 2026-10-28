@@ -100,26 +100,24 @@ class PopupSessionController(
         activityClass: String,
         windowBounds: Rect
     ) {
-        if (!prefs.learningMode || !prefs.learningArmed || source == null) return
+        if (!prefs.learningMode || source == null) return
         val bounds = Rect()
         source.getBoundsInScreen(bounds)
         if (bounds.width() <= 0 || bounds.height() <= 0) return
         val sourceText = source.text?.toString().orEmpty()
         val sourceDesc = source.contentDescription?.toString().orEmpty()
-        if (sourceText.contains("跳过") || sourceDesc.contains("跳过")) {
-            Toast.makeText(service, R.string.learning_wait_splash, Toast.LENGTH_SHORT).show()
-            return
-        }
+        val sourceId = source.viewIdResourceName.orEmpty()
         val saved = learningStore.saveFromNode(
             packageName = packageName,
-            viewId = source.viewIdResourceName.orEmpty(),
+            viewId = sourceId,
             contentDescription = sourceDesc,
+            text = sourceText,
             className = source.className?.toString().orEmpty(),
             bounds = bounds,
             windowBounds = windowBounds,
             activityClass = activityClass
         ) ?: run {
-            Toast.makeText(service, R.string.learning_invalid_close, Toast.LENGTH_SHORT).show()
+            Toast.makeText(service, R.string.learning_invalid_close, Toast.LENGTH_LONG).show()
             return
         }
         if (!saved.added) {
@@ -128,6 +126,7 @@ class PopupSessionController(
         }
 
         prefs.popupMode = PopupMode.LEARNED
+        prefs.learningArmed = true
         val count = (prefs.learningSavedCount + 1).coerceAtMost(RuleLearningStore.MAX_RULES)
         prefs.learningSavedCount = count
         invalidateRules()

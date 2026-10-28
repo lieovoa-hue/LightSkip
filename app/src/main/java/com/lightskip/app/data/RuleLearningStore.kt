@@ -38,6 +38,7 @@ class RuleLearningStore(context: Context) {
         packageName: String,
         viewId: String,
         contentDescription: String,
+        text: String,
         className: String,
         bounds: Rect,
         windowBounds: Rect,
@@ -45,7 +46,7 @@ class RuleLearningStore(context: Context) {
     ): SaveResult? {
         if (bounds.width() <= 0 || bounds.height() <= 0) return null
         val window = usableWindow(bounds, windowBounds)
-        if (!isPlausibleCloseTarget(bounds, window, viewId, contentDescription)) return null
+        if (!isPlausibleCloseTarget(bounds, window, viewId, contentDescription, text)) return null
         val relX = ((bounds.exactCenterX() - window.left) / window.width()).coerceIn(0f, 1f)
         val relY = ((bounds.exactCenterY() - window.top) / window.height()).coerceIn(0f, 1f)
         val relW = (bounds.width().toFloat() / window.width()).coerceIn(0f, 1f)
@@ -163,23 +164,33 @@ class RuleLearningStore(context: Context) {
         bounds: Rect,
         window: Rect,
         viewId: String,
-        contentDescription: String
+        contentDescription: String,
+        text: String
     ): Boolean {
         if (window.width() <= 0 || window.height() <= 0) return false
         val relW = bounds.width().toFloat() / window.width()
         val relH = bounds.height().toFloat() / window.height()
-        if (relW <= 0f || relH <= 0f || relW > 0.22f || relH > 0.14f) return false
+        if (relW <= 0f || relH <= 0f) return false
+
+        val idHint = viewId.lowercase()
+        val textHint = text.trim().lowercase()
+        val descHint = contentDescription.trim().lowercase()
+        val explicitHint = idHint.contains("close") ||
+            idHint.contains("dismiss") ||
+            idHint.contains("skip") ||
+            descHint.contains("close") ||
+            descHint.contains("dismiss") ||
+            descHint.contains("关闭") ||
+            descHint.contains("跳过") ||
+            textHint.startsWith("跳过") ||
+            textHint.startsWith("关闭") ||
+            textHint in setOf("×", "x", "关闭", "关闭广告", "跳过", "skip", "close", "取消")
+        if (explicitHint) {
+            return relW <= 0.80f && relH <= 0.15f && relW * relH <= 0.10f
+        }
+        if (relW > 0.22f || relH > 0.16f) return false
         if (relW * relH > 0.025f) return false
-
-        val hint = (viewId + " " + contentDescription).lowercase()
-        val explicitClose = listOf("close", "dismiss", "关闭", "取消").any { hint.contains(it) }
-        if (explicitClose) return true
-
-        if (abs(relW - relH) > 0.08f) return false
-        val relX = (bounds.exactCenterX() - window.left) / window.width()
-        val relY = (bounds.exactCenterY() - window.top) / window.height()
-        val inCorner = relX >= 0.60f && (relY <= 0.35f || relY >= 0.65f)
-        return inCorner
+        return abs(relW - relH) <= 0.12f
     }
 
     private fun key(packageName: String): String = "rule_$packageName"

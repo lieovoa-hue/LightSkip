@@ -4,11 +4,11 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 > 少等一秒，直接进入。
 
-## v0.3.1 能力
+## v0.3.2 能力
 
 - 开屏广告：识别「跳过」文字、资源 ID 和常见位置，支持点击与手势兜底。
 - 应用内弹窗：执行手动学习规则或导入的李跳跳规则。
-- 学习模式：选择 App 后自动打开；跳过开屏后开始记录；一次最多记录 5 个关闭按钮。
+- 学习模式：选择 App 后自动打开；可直接点击广告上的 X / 关闭 / 跳过记录；一次最多 5 个。
 - 二次弹窗：目标 App 保持前台时，持续监听内容变化；广告晚几秒出现也能扫描。
 - 规则导入：从剪贴板导入李跳跳 `AllRules.json` 或单个 App 的 `popup_rules`。
 - 小米 / Redmi：增加 HyperOS/MIUI 事件与窗口兼容层。
@@ -22,6 +22,16 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 - 兜底点击分时重试：约 1.2s、2.5s、4s、6s；广告容器消失后才结束并计数。
 - 诊断新增 `last splash scan` / `last splash candidate`。
 - 实测志愿汇：`skip_count 18 → 19`，诊断记录 `ACTION_CLICK 4S | 跳过`，随后进入 MainActivity。
+
+### v0.3.2 学习模式修复
+
+- 移除“必须先跳过开屏/必须先武装”的隐藏门槛；选择 App 后即可记录。
+- 广告 SDK 或独立窗口的点击也按“用户选中的目标 App”保存。
+- 接受 X、×、关闭、关闭广告、跳过、跳过 N 等按钮文字，也接受 viewId/desc。
+- 只拒绝整张广告卡片/全屏容器这类明显不是按钮的区域。
+- 实测不等待开屏直接点击测试弹窗 X：`learning_saved_count=1`，规则成功写入。
+- 内容防抖 240ms → 60ms，活动通知间隔 100ms → 50ms，最小扫描间隔 250ms → 120ms。
+- 离开 App 后重开绕过同包冷却；快速重开测试 `38 → 39 → 40`，第二次未被挡住。
 
 ## 规则导入
 
@@ -66,17 +76,17 @@ Android 开屏广告自动跳过与应用内弹窗关闭工具。
 
 ## 下载
 
-- v0.3.1 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.1
-- Release APK：`dist/LightSkip-0.3.1.apk`
+- v0.3.2 Release：https://github.com/lieovoa-hue/LightSkip/releases/tag/v0.3.2
+- Release APK：`dist/LightSkip-0.3.2.apk`
 - 带测试开屏、双 X 弹窗、延迟弹窗和规则测试入口的 Debug APK：
-  `dist/LightSkip-0.3.1-debug-with-demo.apk`
+  `dist/LightSkip-0.3.2-debug-with-demo.apk`
 
 ## 体积与权限
 
 本机构建实测：
 
-- Release APK：`140,645` 字节，约 `137 KB`
-- Debug APK：`1,023,247` 字节，约 `1.0 MB`
+- Release APK：`140,673` 字节，约 `137 KB`
+- Debug APK：`1,074,282` 字节，约 `1.05 MB`
 - 无 `uses-permission`
 - 无 `INTERNET`
 - 无 Room、WorkManager、网络库、第三方统计 SDK
@@ -157,6 +167,8 @@ MEIZU 21 / Android 16 实测：
 - AllRules 剪贴板导入成功；
 - 2 秒后出现的同一 Activity 弹窗自动关闭成功；
 - 志愿汇开屏连续重开测试成功：`skip_count 18 → 19`，识别到 `4S | 跳过`；
+- 学习模式直接点击 X：`learning_saved_count=1`，规则写入成功；
+- 快速关闭再打开测试开屏：连续两次均跳过，`38 → 39 → 40`；
 - 空闲 CPU 采样 `0%`；
 - 后台 PSS 约 `44–57 MB`；
 - 会话结束后事件类型收缩回低频集合。
@@ -207,7 +219,7 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 - `app/build/outputs/apk/release/app-release.apk`
-- `dist/LightSkip-0.3.1.apk`
+- `dist/LightSkip-0.3.2.apk`
 
 ## 已知限制
 
